@@ -55,10 +55,6 @@ export type AdminSettings = {
   googleDrive: {
     folderId: string;
   };
-  admin: {
-    username: string;
-    password: string; 
-  };
 };
   
 export type AssessmentVideo = {
