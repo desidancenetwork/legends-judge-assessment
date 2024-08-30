@@ -1,13 +1,40 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { GetServerSideProps } from 'next';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { submitAssessment } from '../utils/api';
 
 const UploadNotes = () => {
   const router = useRouter();
-  const { userInfo, videoNotes, rankings } = useAssessment();
+  const { userInfo, videoNotes, rankings, hasCompletedRanking, setHasCompletedAssessment } = useAssessment();
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    if (!userInfo || !hasCompletedRanking) {
+      router.push('/assessment/ranking');
+    }
+  }, [userInfo, hasCompletedRanking, router]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    const handlePopState = () => {
+      router.replace('/upload-notes');
+    };
+
+    window.history.pushState(null, '', '/upload-notes');
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [router]);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -30,6 +57,9 @@ const UploadNotes = () => {
       };
 
       await submitAssessment(assessmentData, files);
+      setHasCompletedAssessment(false); // Reset the assessment completion status
+      document.cookie = "hasCompletedAssessment=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "hasCompletedRanking=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       alert('Assessment submitted successfully!');
       router.push('/farewell');
     } catch (error) {
@@ -38,7 +68,7 @@ const UploadNotes = () => {
     } finally {
       setIsUploading(false);
     }
-  }, [userInfo, videoNotes, rankings, files, router]);
+  }, [userInfo, videoNotes, rankings, files, router, setHasCompletedAssessment]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -64,6 +94,22 @@ const UploadNotes = () => {
       </div>
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { req } = context;
+  const hasCompletedRanking = req.cookies.hasCompletedRanking === 'true';
+
+  if (!hasCompletedRanking) {
+    return {
+      redirect: {
+        destination: '/assessment/ranking',
+        permanent: false,
+      },
+    };
+  }
+
+  return { props: {} };
 };
 
 export default UploadNotes;

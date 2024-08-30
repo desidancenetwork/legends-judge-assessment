@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useReducer } from 'react';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { Ranking, AdminSettings } from '../types/types';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
@@ -76,9 +76,36 @@ const RankingItem = React.memo(({
 
 RankingItem.displayName = 'RankingItem';
 
+type RankingAction = 
+  | { type: 'UPDATE_RANKING'; payload: { index: number; ranking: Ranking } }
+  | { type: 'REORDER_RANKINGS'; payload: Ranking[] }
+  | { type: 'UPDATE_JUSTIFICATION'; payload: { index: number; justification: string } };
+
+const rankingReducer = (state: Ranking[], action: RankingAction): Ranking[] => {
+  switch (action.type) {
+    case 'UPDATE_RANKING':
+      return state.map((ranking, index) => 
+        index === action.payload.index ? action.payload.ranking : ranking
+      );
+    case 'REORDER_RANKINGS':
+      return action.payload.map((ranking, index) => ({
+        ...ranking,
+        rank: (index + 1).toString(),
+      }));
+    case 'UPDATE_JUSTIFICATION':
+      return state.map((ranking, index) => 
+        index === action.payload.index 
+          ? { ...ranking, justification: action.payload.justification } 
+          : ranking
+      );
+    default:
+      return state;
+  }
+};
+
 const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange }) => {
   const { videoNotes } = useAssessment();
-  const [rankings, setRankings] = useState<Ranking[]>(() => 
+  const [rankings, dispatch] = useReducer(rankingReducer, 
     Array.from({ length: videoNotes.length }, (_, index) => ({
       id: `ranking-${index}`,
       team: `Team ${index + 1}`,
@@ -87,18 +114,14 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
     }))
   );
   const [error, setError] = useState<string | null>(null);
-  const [expandedNotes, setExpandedNotes] = useState<number[]>([]);
+  const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     onChange(rankings);
   }, [rankings, onChange]);
 
   const handleJustificationChange = useCallback((index: number, value: string) => {
-    setRankings(prev => {
-      const newRankings = [...prev];
-      newRankings[index] = { ...newRankings[index], justification: value };
-      return newRankings;
-    });
+    dispatch({ type: 'UPDATE_JUSTIFICATION', payload: { index, justification: value } });
   }, []);
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -107,11 +130,15 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
   }, [rankings, onSubmit]);
 
   const toggleNotes = useCallback((index: number) => {
-    setExpandedNotes(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
+    setExpandedNotes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
   }, []);
 
   const onDragEnd = useCallback((result: DropResult) => {
@@ -123,10 +150,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
     const [reorderedItem] = newRankings.splice(result.source.index, 1);
     newRankings.splice(result.destination.index, 0, reorderedItem);
 
-    setRankings(newRankings.map((item, index) => ({
-      ...item,
-      rank: (index + 1).toString(),
-    })));
+    dispatch({ type: 'REORDER_RANKINGS', payload: newRankings });
   }, [rankings]);
 
   const memoizedRankings = useMemo(() => rankings, [rankings]);
@@ -138,14 +162,14 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="rankings">
             {(provided) => (
-              <div {...provided.droppableProps} ref={provided.innerRef}>
+              <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
                 {memoizedRankings.map((ranking, index) => (
                   <RankingItem
                     key={ranking.id}
                     ranking={ranking}
                     index={index}
                     videoNote={videoNotes[parseInt(ranking.id.split('-')[1])]?.note ?? ''}
-                    isExpanded={expandedNotes.includes(index)}
+                    isExpanded={expandedNotes.has(index)}
                     onToggle={() => toggleNotes(index)}
                     onJustificationChange={(value) => handleJustificationChange(index, value)}
                   />

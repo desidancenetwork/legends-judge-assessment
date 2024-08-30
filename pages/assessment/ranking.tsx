@@ -13,7 +13,7 @@ interface RankingPageProps {
 
 const RankingPage = ({ settings }: RankingPageProps) => {
   const router = useRouter();
-  const { userInfo, setRankings, hasCompletedAssessment } = useAssessment();
+  const { userInfo, setRankings, hasCompletedAssessment, setHasCompletedRanking } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.rankingTime);
   const rankingsRef = useRef<Ranking[]>([]);
 
@@ -45,6 +45,8 @@ const RankingPage = ({ settings }: RankingPageProps) => {
 
   const handleSubmit = (rankings: Ranking[]) => {
     setRankings(rankings);
+    setHasCompletedRanking(true);
+    document.cookie = "hasCompletedRanking=true; path=/";
     router.push('/upload-notes');
   };
 
@@ -54,6 +56,8 @@ const RankingPage = ({ settings }: RankingPageProps) => {
 
   const handleTimeUp = () => {
     setRankings(rankingsRef.current);
+    setHasCompletedRanking(true);
+    document.cookie = "hasCompletedRanking=true; path=/";
     router.push('/upload-notes');
   };
 
