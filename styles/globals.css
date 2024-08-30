@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-white min-h-screen bg-gray-900;
+  }
+}
+
+@layer components {
+  .btn,
+  .input,
+  .label,
+  .notes-container,
+  [class^="bg-"],
+  [class*=" bg-"] {
+    @apply bg-opacity-50 backdrop-blur-sm;
+  }
+  
+  .btn {
+    @apply px-4 py-2 rounded font-bold text-white transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 hover:bg-indigo-700;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-600 hover:bg-gray-700;
+  }
+
+  .input {
+    @apply mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-300;
+  }
+
+  .notes-container {
+    @apply max-h-[300px] overflow-y-auto;
+  }
+}

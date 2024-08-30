@@ -34,3 +34,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# google api
+ddn-legends-google-credentials.json
+
+# settings
+settings.json

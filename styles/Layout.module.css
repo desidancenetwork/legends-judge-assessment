@@ -1,0 +1,14 @@
+.layoutContainer {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.contentContainer {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent overlay */
+}
