@@ -11,7 +11,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const playerRef = useRef<ReactPlayer>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   const handlePlay = () => {
     if (!hasStarted) {
@@ -33,8 +46,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
     onEnded();
   };
 
+  const handleFullscreenToggle = () => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <ReactPlayer
         ref={playerRef}
         url={url}
@@ -48,11 +69,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
         config={{
           file: {
             attributes: {
-              controlsList: 'nodownload',
+              controlsList: 'nodownload nofullscreen',
+              disablePictureInPicture: true,
             },
           },
         }}
       />
+      {hasStarted && !hasEnded && (
+        <div className="absolute bottom-0 right-0 p-2">
+          <button
+            onClick={handleFullscreenToggle}
+            className="bg-white text-black px-2 py-1 rounded"
+          >
+            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          </button>
+        </div>
+      )}
       {hasEnded && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <p className="text-white text-2xl">Video Ended</p>

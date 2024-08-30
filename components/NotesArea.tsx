@@ -4,9 +4,10 @@ interface NotesAreaProps {
   onSubmit: (note: string) => void;
   onChange: (note: string) => void;
   timeRemaining: number;
+  buttonText: string;
 }
 
-const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange, timeRemaining }) => {
+const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange, timeRemaining, buttonText }) => {
   const [note, setNote] = useState('');
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange, timeRemaining
         disabled={timeRemaining === 0}
         className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
       >
-        Submit Notes
+        {buttonText}
       </button>
     </div>
   );

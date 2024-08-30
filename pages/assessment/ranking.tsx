@@ -13,15 +13,35 @@ interface RankingPageProps {
 
 const RankingPage = ({ settings }: RankingPageProps) => {
   const router = useRouter();
-  const { userInfo, setRankings } = useAssessment();
+  const { userInfo, setRankings, hasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.rankingTime);
   const rankingsRef = useRef<Ranking[]>([]);
 
   useEffect(() => {
     if (!userInfo) {
       router.push('/');
+    } else if (!hasCompletedAssessment) {
+      router.push('/assessment');
     }
-  }, [userInfo, router]);
+  }, [userInfo, hasCompletedAssessment, router]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+
+    const handlePopState = () => {
+      router.push('/assessment/ranking');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
 
   const handleSubmit = (rankings: Ranking[]) => {
     setRankings(rankings);
@@ -33,9 +53,7 @@ const RankingPage = ({ settings }: RankingPageProps) => {
   };
 
   const handleTimeUp = () => {
-    // Save the current rankings
     setRankings(rankingsRef.current);
-    // Redirect to the next page
     router.push('/upload-notes');
   };
 
@@ -59,8 +77,22 @@ const RankingPage = ({ settings }: RankingPageProps) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
   const settings = getServerSideSettings();
+  
+  // Check if the user has completed the assessment
+  const { req } = context;
+  const hasCompletedAssessment = req.cookies.hasCompletedAssessment === 'true';
+
+  if (!hasCompletedAssessment) {
+    return {
+      redirect: {
+        destination: '/assessment',
+        permanent: false,
+      },
+    };
+  }
+
   return { props: { settings } };
 };
 

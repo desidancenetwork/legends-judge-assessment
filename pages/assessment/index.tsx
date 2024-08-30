@@ -14,7 +14,7 @@ interface AssessmentProps {
 
 const Assessment = ({ settings }: AssessmentProps) => {
   const router = useRouter();
-  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex } = useAssessment();
+  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
   const [, setIsVideoPlaying] = useState(false);
@@ -73,17 +73,23 @@ const Assessment = ({ settings }: AssessmentProps) => {
     currentNoteRef.current = note;
   }, []);
 
+  const completeAssessment = useCallback(() => {
+    setHasCompletedAssessment(true);
+    document.cookie = "hasCompletedAssessment=true; path=/";
+    router.push('/assessment/ranking');
+  }, [setHasCompletedAssessment, router]);
+
   useEffect(() => {
     if (pendingNote !== null) {
       addVideoNote({ videoId: currentVideoIndex, note: pendingNote });
       if (currentVideoIndex < videos.length - 1) {
         setCurrentVideoIndex(currentVideoIndex + 1);
       } else {
-        router.push('/assessment/ranking');
+        completeAssessment();
       }
       setPendingNote(null);
     }
-  }, [pendingNote, addVideoNote, currentVideoIndex, videos.length, setCurrentVideoIndex, router]);
+  }, [pendingNote, addVideoNote, currentVideoIndex, videos.length, setCurrentVideoIndex, completeAssessment]);
 
   const handleTimeUp = useCallback(() => {
     handleNoteSubmit(currentNoteRef.current);
@@ -118,11 +124,21 @@ const Assessment = ({ settings }: AssessmentProps) => {
               />
             </div>
           )}
-          <NotesArea 
-            onSubmit={handleNoteSubmit} 
-            onChange={handleNoteChange}
-            timeRemaining={timeRemaining} 
-          />
+          {currentVideoIndex < videos.length - 1 ? 
+            <NotesArea 
+              onSubmit={handleNoteSubmit} 
+              onChange={handleNoteChange}
+              timeRemaining={timeRemaining}
+              buttonText="Submit and Proceed to Next Video"
+            />
+            :
+            <NotesArea 
+              onSubmit={handleNoteSubmit} 
+              onChange={handleNoteChange}
+              timeRemaining={timeRemaining}
+              buttonText="Submit and Proceed to Ranking"
+            />
+          }
         </div>
       </div>
     </div>

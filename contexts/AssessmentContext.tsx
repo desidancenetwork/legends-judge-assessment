@@ -10,6 +10,8 @@ interface AssessmentContextType {
   setRankings: (rankings: Ranking[]) => void;
   currentVideoIndex: number;
   setCurrentVideoIndex: (index: number) => void;
+  hasCompletedAssessment: boolean;
+  setHasCompletedAssessment: (completed: boolean) => void;
   resetAssessment: () => void;
 }
 
@@ -20,6 +22,7 @@ export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [videoNotes, setVideoNotes] = useState<VideoNote[]>([]);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [hasCompletedAssessment, setHasCompletedAssessment] = useState(false);
 
   const addVideoNote = useCallback((note: VideoNote) => {
     setVideoNotes(prevNotes => [...prevNotes, note]);
@@ -43,6 +46,8 @@ export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setRankings,
         currentVideoIndex,
         setCurrentVideoIndex,
+        hasCompletedAssessment,
+        setHasCompletedAssessment,
         resetAssessment,
       }}
     >
