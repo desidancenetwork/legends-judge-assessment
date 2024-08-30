@@ -43,7 +43,7 @@ const RankingItem = React.memo(({
           <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
           <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
           <div className="ml-auto flex items-center">
-            <span className="text-white mr-2">Notes</span>
+            <span className="text-white mr-2">Your Notes</span>
             <button
               type="button"
               onClick={onToggle}

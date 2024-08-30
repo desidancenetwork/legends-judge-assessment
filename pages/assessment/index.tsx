@@ -104,6 +104,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
       <div className="w-full max-w-4xl space-y-8">
         <h1 className="text-4xl font-bold mb-4 text-white text-center text-shadow-lg">Video Assessment</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
+          <h3 className="text-4xl mb-4 text-white text-center text-shadow-lg">Team {currentVideoIndex + 1}</h3>
           {videos[currentVideoIndex] && (
             <div className="mb-6">
               <VideoPlayer 
