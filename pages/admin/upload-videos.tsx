@@ -3,7 +3,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import AdminNavigation from '../../components/AdminNavigation';
 import { uploadVideo, getUploadedVideos } from '../../utils/api';
 import { VideoSlot, AdminSettings } from '../../types/types';
 import { getServerSideSettings } from '../../utils/serverSettings';

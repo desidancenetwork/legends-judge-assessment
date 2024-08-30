@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import AdminNavigation from '../../components/AdminNavigation';
 
 const AdminDashboard = () => {
   const { data: session, status } = useSession();
