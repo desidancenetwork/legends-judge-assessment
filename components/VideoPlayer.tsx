@@ -1,13 +1,15 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactPlayer from 'react-player';
+import { Play, Maximize, Minimize } from 'lucide-react';
 
 interface VideoPlayerProps {
   url: string;
   onPlay: () => void;
   onEnded: () => void;
+  onProgress: (progress: number) => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
@@ -26,18 +28,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
     };
   }, []);
 
+  const handleProgress = (state: { played: number }) => {
+    onProgress(state.played);
+  };
+
   const handlePlay = () => {
     if (!hasStarted) {
       setIsPlaying(true);
       setHasStarted(true);
       onPlay();
+    } else {
+      setIsPlaying(true);
     }
   };
 
   const handlePause = () => {
-    if (hasStarted && !hasEnded) {
-      setIsPlaying(true);
-    }
+    setIsPlaying(false);
   };
 
   const handleEnded = () => {
@@ -55,36 +61,43 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded }) => {
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative group">
       <ReactPlayer
         ref={playerRef}
         url={url}
         width="100%"
         height="auto"
         playing={isPlaying}
-        controls={!hasStarted}
+        controls={false}
         onPlay={handlePlay}
+        onProgress={handleProgress}
         onPause={handlePause}
         onEnded={handleEnded}
         config={{
           file: {
             attributes: {
-              controlsList: 'nodownload nofullscreen',
+              controlsList: 'nodownload',
               disablePictureInPicture: true,
             },
           },
         }}
       />
-      {hasStarted && !hasEnded && (
-        <div className="absolute bottom-0 right-0 p-2">
-          <button
-            onClick={handleFullscreenToggle}
-            className="bg-white text-black px-2 py-1 rounded"
-          >
-            {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-          </button>
-        </div>
+      {!isPlaying && !hasEnded && (
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 group-hover:opacity-100"
+        >
+          <Play size={64} className="text-white" />
+        </button>
       )}
+      <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <button
+          onClick={handleFullscreenToggle}
+          className="bg-white bg-opacity-25 text-white p-2 rounded-full hover:bg-opacity-50 transition-colors duration-300"
+        >
+          {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+        </button>
+      </div>
       {hasEnded && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <p className="text-white text-2xl">Video Ended</p>

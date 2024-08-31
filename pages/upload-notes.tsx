@@ -19,7 +19,6 @@ const UploadNotes = () => {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = '';
     };
 
     const handlePopState = () => {

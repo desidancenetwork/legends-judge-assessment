@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useAssessment } from '../../contexts/AssessmentContext';
@@ -28,6 +28,7 @@ const RankingPage = ({ settings }: RankingPageProps) => {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
+      e.returnValue = '';
     };
 
     const handlePopState = () => {
@@ -43,23 +44,23 @@ const RankingPage = ({ settings }: RankingPageProps) => {
     };
   }, [router]);
 
-  const handleSubmit = (rankings: Ranking[]) => {
+  const handleSubmit = useCallback((rankings: Ranking[]) => {
     setRankings(rankings);
     setHasCompletedRanking(true);
     document.cookie = "hasCompletedRanking=true; path=/";
     router.push('/upload-notes');
-  };
+  }, [setRankings, setHasCompletedRanking, router]);
 
-  const updateRankings = (rankings: Ranking[]) => {
+  const updateRankings = useCallback((rankings: Ranking[]) => {
     rankingsRef.current = rankings;
-  };
+  }, []);
 
-  const handleTimeUp = () => {
+  const handleTimeUp = useCallback(() => {
     setRankings(rankingsRef.current);
     setHasCompletedRanking(true);
     document.cookie = "hasCompletedRanking=true; path=/";
     router.push('/upload-notes');
-  };
+  }, [setRankings, setHasCompletedRanking, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -84,7 +85,6 @@ const RankingPage = ({ settings }: RankingPageProps) => {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const settings = getServerSideSettings();
   
-  // Check if the user has completed the assessment
   const { req } = context;
   const hasCompletedAssessment = req.cookies.hasCompletedAssessment === 'true';
 

@@ -5,11 +5,6 @@ const nextConfig = {
   images: {
     domains: ['placeholder.com'], // Add any domains you'll be loading images from
   },
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb', // Increase this limit as needed
-    },
-  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {

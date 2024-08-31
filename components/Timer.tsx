@@ -35,13 +35,15 @@ const Timer: React.FC<TimerProps> = React.memo(({ timeRemaining, setTimeRemainin
       { threshold: 0.1 }
     );
 
-    if (timerRef.current) {
-      observer.observe(timerRef.current);
+    const currentTimerRef = timerRef.current;
+
+    if (currentTimerRef) {
+      observer.observe(currentTimerRef);
     }
 
     return () => {
-      if (timerRef.current) {
-        observer.unobserve(timerRef.current);
+      if (currentTimerRef) {
+        observer.unobserve(currentTimerRef);
       }
     };
   }, []);

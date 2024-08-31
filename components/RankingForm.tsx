@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useReducer } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { Ranking, AdminSettings } from '../types/types';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
@@ -14,98 +14,101 @@ interface RankingItemProps {
   ranking: Ranking;
   index: number;
   videoNote: string;
-  isExpanded: boolean;
-  onToggle: () => void;
-  onJustificationChange: (value: string) => void;
+  isNotesExpanded: boolean;
+  isJustificationExpanded: boolean;
+  onToggleNotes: () => void;
+  onToggleJustification: () => void;
+  onJustificationChange: (id: string, value: string) => void;
 }
 
-const RankingItem = React.memo(({ 
+const RankingItem: React.FC<RankingItemProps> = React.memo(({ 
   ranking, 
   index, 
   videoNote, 
-  isExpanded, 
-  onToggle, 
+  isNotesExpanded,
+  isJustificationExpanded,
+  onToggleNotes, 
+  onToggleJustification,
   onJustificationChange,
-}: RankingItemProps) => (
-  <Draggable draggableId={ranking.id} index={index}>
-    {(provided, snapshot) => (
-      <div
-        ref={provided.innerRef}
-        {...provided.draggableProps}
-        className={`p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-4 ${
-          snapshot.isDragging ? 'shadow-lg' : ''
-        }`}
-      >
-        <div className="flex items-center mb-2">
-          <div {...provided.dragHandleProps} className="mr-2 cursor-grab">
-            <GripVertical size={20} className="text-gray-400" />
+}) => {
+  const handleJustificationChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onJustificationChange(ranking.id, e.target.value);
+  }, [ranking.id, onJustificationChange]);
+
+  return (
+    <Draggable draggableId={ranking.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          className={`p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-4 ${
+            snapshot.isDragging ? 'shadow-lg' : ''
+          }`}
+        >
+          <div className="flex items-center mb-2">
+            <div {...provided.dragHandleProps} className="mr-2 cursor-grab">
+              <GripVertical size={20} className="text-gray-400" />
+            </div>
+            <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
+            <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
+            <div className="ml-auto flex items-center">
+              <button
+                type="button"
+                onClick={onToggleNotes}
+                className="text-white mr-2"
+              >
+                Your Notes {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+              </button>
+              <button
+                type="button"
+                onClick={onToggleJustification}
+                className="text-white"
+              >
+                Justification {isJustificationExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+              </button>
+            </div>
           </div>
-          <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
-          <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
-          <div className="ml-auto flex items-center">
-            <span className="text-white mr-2">Your Notes</span>
-            <button
-              type="button"
-              onClick={onToggle}
-              className="text-white"
-            >
-              {isExpanded ? <ChevronUp /> : <ChevronDown />}
-            </button>
-          </div>
+          {isNotesExpanded && (
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-white mb-1">Your Notes:</h4>
+              <textarea
+                value={videoNote}
+                readOnly
+                className="w-full h-24 p-2 bg-gray-600 bg-opacity-50 text-white border border-gray-600 rounded"
+              />
+            </div>
+          )}
+          {isJustificationExpanded && (
+            <div className="mb-4">
+              <h4 className="text-sm font-semibold text-white mb-1">Justification:</h4>
+              <textarea
+                value={ranking.justification}
+                onChange={handleJustificationChange}
+                placeholder="Enter your justification here"
+                className="w-full h-24 p-2 bg-gray-700 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
+              />
+              <div className="text-right text-sm text-gray-400 mt-1">
+                {ranking.justification.length} / 500 characters
+              </div>
+            </div>
+          )}
         </div>
-        {isExpanded && (
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-white mb-1">Video Notes:</h4>
-            <textarea
-              value={videoNote}
-              readOnly
-              className="w-full h-24 p-2 bg-gray-600 bg-opacity-50 text-white border border-gray-600 rounded"
-            />
-          </div>
-        )}
-        <textarea
-          value={ranking.justification}
-          onChange={(e) => onJustificationChange(e.target.value)}
-          placeholder="Justification"
-          className="w-full h-24 p-2 bg-gray-700 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
-        />
-      </div>
-    )}
-  </Draggable>
-));
+      )}
+    </Draggable>
+  );
+}, (prevProps, nextProps) => {
+  return prevProps.ranking === nextProps.ranking &&
+         prevProps.index === nextProps.index &&
+         prevProps.videoNote === nextProps.videoNote &&
+         prevProps.isNotesExpanded === nextProps.isNotesExpanded &&
+         prevProps.isJustificationExpanded === nextProps.isJustificationExpanded;
+});
 
 RankingItem.displayName = 'RankingItem';
 
-type RankingAction = 
-  | { type: 'UPDATE_RANKING'; payload: { index: number; ranking: Ranking } }
-  | { type: 'REORDER_RANKINGS'; payload: Ranking[] }
-  | { type: 'UPDATE_JUSTIFICATION'; payload: { index: number; justification: string } };
-
-const rankingReducer = (state: Ranking[], action: RankingAction): Ranking[] => {
-  switch (action.type) {
-    case 'UPDATE_RANKING':
-      return state.map((ranking, index) => 
-        index === action.payload.index ? action.payload.ranking : ranking
-      );
-    case 'REORDER_RANKINGS':
-      return action.payload.map((ranking, index) => ({
-        ...ranking,
-        rank: (index + 1).toString(),
-      }));
-    case 'UPDATE_JUSTIFICATION':
-      return state.map((ranking, index) => 
-        index === action.payload.index 
-          ? { ...ranking, justification: action.payload.justification } 
-          : ranking
-      );
-    default:
-      return state;
-  }
-};
-
 const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange }) => {
   const { videoNotes } = useAssessment();
-  const [rankings, dispatch] = useReducer(rankingReducer, 
+  const [rankings, setRankings] = useState<Ranking[]>(() =>
     Array.from({ length: videoNotes.length }, (_, index) => ({
       id: `ranking-${index}`,
       team: `Team ${index + 1}`,
@@ -113,45 +116,70 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
       justification: '',
     }))
   );
-  const [error, setError] = useState<string | null>(null);
-  const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [expandedJustifications, setExpandedJustifications] = useState<Set<string>>(
+    new Set(rankings.map(ranking => ranking.id))
+  );
 
+  const rankingsRef = useRef(rankings);
   useEffect(() => {
-    onChange(rankings);
-  }, [rankings, onChange]);
+    rankingsRef.current = rankings;
+  }, [rankings]);
 
-  const handleJustificationChange = useCallback((index: number, value: string) => {
-    dispatch({ type: 'UPDATE_JUSTIFICATION', payload: { index, justification: value } });
-  }, []);
-
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(rankings);
-  }, [rankings, onSubmit]);
-
-  const toggleNotes = useCallback((index: number) => {
+  const toggleNotes = useCallback((id: string) => {
     setExpandedNotes(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
+      if (newSet.has(id)) {
+        newSet.delete(id);
       } else {
-        newSet.add(index);
+        newSet.add(id);
       }
       return newSet;
     });
   }, []);
+
+  const toggleJustification = useCallback((id: string) => {
+    setExpandedJustifications(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleJustificationChange = useCallback((id: string, value: string) => {
+    setRankings(prev => prev.map(ranking => 
+      ranking.id === id ? { ...ranking, justification: value.slice(0, 500) } : ranking
+    ));
+  }, []);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(rankingsRef.current);
+  }, [onSubmit]);
 
   const onDragEnd = useCallback((result: DropResult) => {
     if (!result.destination) {
       return;
     }
 
-    const newRankings = Array.from(rankings);
-    const [reorderedItem] = newRankings.splice(result.source.index, 1);
-    newRankings.splice(result.destination.index, 0, reorderedItem);
+    setRankings(prev => {
+      const newRankings = Array.from(prev);
+      const [reorderedItem] = newRankings.splice(result.source.index, 1);
+      newRankings.splice(result.destination!.index, 0, reorderedItem);
 
-    dispatch({ type: 'REORDER_RANKINGS', payload: newRankings });
-  }, [rankings]);
+      const updatedRankings = newRankings.map((ranking, index) => ({
+        ...ranking,
+        rank: (index + 1).toString(),
+      }));
+
+      onChange(updatedRankings);
+      return updatedRankings;
+    });
+  }, [onChange]);
 
   const memoizedRankings = useMemo(() => rankings, [rankings]);
 
@@ -169,9 +197,11 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
                     ranking={ranking}
                     index={index}
                     videoNote={videoNotes[parseInt(ranking.id.split('-')[1])]?.note ?? ''}
-                    isExpanded={expandedNotes.has(index)}
-                    onToggle={() => toggleNotes(index)}
-                    onJustificationChange={(value) => handleJustificationChange(index, value)}
+                    isNotesExpanded={expandedNotes.has(ranking.id)}
+                    isJustificationExpanded={expandedJustifications.has(ranking.id)}
+                    onToggleNotes={() => toggleNotes(ranking.id)}
+                    onToggleJustification={() => toggleJustification(ranking.id)}
+                    onJustificationChange={handleJustificationChange}
                   />
                 ))}
                 {provided.placeholder}
@@ -180,7 +210,6 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
           </Droppable>
         </DragDropContext>
 
-        {error && <p className="text-red-400 mt-4">{error}</p>}
         <button
           type="submit"
           className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"

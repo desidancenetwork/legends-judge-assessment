@@ -17,11 +17,12 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
-  const [, setIsVideoPlaying] = useState(false);
-  const [, setIsVideoEnded] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [pendingNote, setPendingNote] = useState<string | null>(null);
   const currentNoteRef = useRef<string>('');
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!userInfo) {
@@ -53,6 +54,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
     setTimeRemaining(settings.assessment.additionalTime);
     setPendingNote(null);
     currentNoteRef.current = '';
+    setProgress(0);
   }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
@@ -95,6 +97,10 @@ const Assessment = ({ settings }: AssessmentProps) => {
     handleNoteSubmit(currentNoteRef.current);
   }, [handleNoteSubmit]);
 
+  const handleVideoProgress = useCallback((progress: number) => {
+    setProgress(progress);
+  }, []);
+
   if (videos.length === 0) {
     return <div className="text-white text-center">Loading videos...</div>;
   }
@@ -104,7 +110,10 @@ const Assessment = ({ settings }: AssessmentProps) => {
       <div className="w-full max-w-4xl space-y-8">
         <h1 className="text-4xl font-bold mb-4 text-white text-center text-shadow-lg">Video Assessment</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
-          <h3 className="text-4xl mb-4 text-white text-center text-shadow-lg">Team {currentVideoIndex + 1}</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-4xl text-white text-shadow-lg">Team {currentVideoIndex + 1}</h3>
+            <span className="text-gray-300 text-sm">Video {currentVideoIndex + 1} of {videos.length}</span>
+          </div>
           {videos[currentVideoIndex] && (
             <div className="mb-6">
               <VideoPlayer 
@@ -112,7 +121,11 @@ const Assessment = ({ settings }: AssessmentProps) => {
                 url={videos[currentVideoIndex]}
                 onPlay={handleVideoPlay}
                 onEnded={handleVideoEnd}
+                onProgress={handleVideoProgress}
               />
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress * 100}%` }}></div>
+              </div>
             </div>
           )}
           {showTimer && (
@@ -125,21 +138,23 @@ const Assessment = ({ settings }: AssessmentProps) => {
               />
             </div>
           )}
-          {currentVideoIndex < videos.length - 1 ? 
-            <NotesArea 
-              onSubmit={handleNoteSubmit} 
-              onChange={handleNoteChange}
-              timeRemaining={timeRemaining}
-              buttonText="Submit and Proceed to Next Video"
-            />
-            :
-            <NotesArea 
-              onSubmit={handleNoteSubmit} 
-              onChange={handleNoteChange}
-              timeRemaining={timeRemaining}
-              buttonText="Submit and Proceed to Ranking"
-            />
-          }
+          <NotesArea 
+            key={currentVideoIndex}
+            onSubmit={handleNoteSubmit} 
+            onChange={handleNoteChange}
+            timeRemaining={timeRemaining}
+          />
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => handleNoteSubmit(currentNoteRef.current)}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {currentVideoIndex < videos.length - 1 ? 
+                "Submit and Proceed to Next Video" : 
+                "Submit and Proceed to Ranking"
+              }
+            </button>
+          </div>
         </div>
       </div>
     </div>
