@@ -15,10 +15,6 @@ function getDefaultSettings(): AdminSettings {
     },
     googleDrive: {
       folderId: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID ?? "root"
-    },
-    admin: {
-      username: process.env.ADMIN_USERNAME ?? "admin",
-      password: process.env.ADMIN_PASSWORD ?? "test"
     }
   };
 }
