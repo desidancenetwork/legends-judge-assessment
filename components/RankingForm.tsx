@@ -57,7 +57,7 @@ const RankingItem: React.FC<RankingItemProps> = React.memo(({
                 onClick={onToggleNotes}
                 className="text-white mr-2"
               >
-                Your Notes {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+                notes {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
               </button>
               <button
                 type="button"
@@ -70,7 +70,7 @@ const RankingItem: React.FC<RankingItemProps> = React.memo(({
           </div>
           {isNotesExpanded && (
             <div className="mb-4">
-              <h4 className="text-sm font-semibold text-white mb-1">Your Notes:</h4>
+              <h4 className="text-sm font-semibold text-white mb-1">notes:</h4>
               <textarea
                 value={videoNote}
                 readOnly
@@ -80,11 +80,11 @@ const RankingItem: React.FC<RankingItemProps> = React.memo(({
           )}
           {isJustificationExpanded && (
             <div className="mb-4">
-              <h4 className="text-sm font-semibold text-white mb-1">Justification:</h4>
+              <h4 className="text-sm font-semibold text-white mb-1">justification:</h4>
               <textarea
                 value={ranking.justification}
                 onChange={handleJustificationChange}
-                placeholder="Enter your justification here"
+                placeholder={`Please justify your ranking for ${ranking.team}`}
                 className="w-full h-24 p-2 bg-gray-700 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
               />
               <div className="text-right text-sm text-gray-400 mt-1">
@@ -185,7 +185,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
 
   return (
     <div className="space-y-8">
-      <p className="text-white p-2 rounded-lg mb-1 font-semibold">Based on your judgment, drag and drop the rankings in the order you see fit.</p>
+      <p className="text-white p-2 rounded-lg mb-1 font-semibold">Please drag and drop the rankings in your desired order.</p>
       <form onSubmit={handleSubmit}>
         <DragDropContext onDragEnd={onDragEnd}>
           <Droppable droppableId="rankings">

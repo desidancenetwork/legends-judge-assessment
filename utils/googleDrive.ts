@@ -2,6 +2,7 @@ import * as google from 'googleapis';
 import { Readable } from 'stream';
 
 const auth = new google.Auth.GoogleAuth({
+  
   keyFile: process.env.NEXT_PUBLIC_GOOGLE_APPLICATION_CREDENTIALS,
   scopes: ['https://www.googleapis.com/auth/drive.file'],
 });

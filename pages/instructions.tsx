@@ -27,7 +27,7 @@ const Instructions = ({ settings }: InstructionsProps) => {
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-white text-shadow-lg">Assessment Instructions</h1>
+          <h1 className="text-4xl font-bold mb-4 text-white text-shadow-lg">Instructions</h1>
         </div>
         <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 shadow-xl">
           <ul className="list-disc pl-5 space-y-2 mb-6 text-gray-200">
@@ -43,7 +43,7 @@ const Instructions = ({ settings }: InstructionsProps) => {
             onClick={handleStart}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"
           >
-            Start Assessment
+            Start
           </button>
         </div>
       </div>

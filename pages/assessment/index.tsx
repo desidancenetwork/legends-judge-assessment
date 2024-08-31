@@ -108,7 +108,6 @@ const Assessment = ({ settings }: AssessmentProps) => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl space-y-8">
-        <h1 className="text-4xl font-bold mb-4 text-white text-center text-shadow-lg">Video Assessment</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-4xl text-white text-shadow-lg">Team {currentVideoIndex + 1}</h3>
@@ -150,8 +149,8 @@ const Assessment = ({ settings }: AssessmentProps) => {
               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               {currentVideoIndex < videos.length - 1 ? 
-                "Submit and Proceed to Next Video" : 
-                "Submit and Proceed to Ranking"
+                "Save and Continue" : 
+                "Continue to Ranking"
               }
             </button>
           </div>
