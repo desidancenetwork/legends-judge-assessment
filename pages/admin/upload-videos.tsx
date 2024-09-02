@@ -5,7 +5,7 @@ import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { uploadVideo, getUploadedVideos } from '../../utils/api';
 import { VideoSlot, AdminSettings } from '../../types/types';
-import { getServerSideSettings } from '../../utils/serverSettings';
+import { getSettings } from '@/utils/kvUtils';
 
 interface UploadVideosProps {
   settings: AdminSettings;
@@ -122,7 +122,7 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = getServerSideSettings();
+  const settings = await getSettings();
   return { props: { settings } };
 };
 

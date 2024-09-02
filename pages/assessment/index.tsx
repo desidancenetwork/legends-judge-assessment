@@ -6,7 +6,7 @@ import VideoPlayer from '../../components/VideoPlayer';
 import Timer from '../../components/Timer';
 import NotesArea from '../../components/NotesArea';
 import { AdminSettings } from '../../types/types';
-import { getServerSideSettings } from '../../utils/serverSettings';
+import { getSettings } from '../../utils/kvUtils';
 
 interface AssessmentProps {
   settings: AdminSettings;
@@ -161,7 +161,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = getServerSideSettings();
+  const settings = await getSettings();
   return { props: { settings } };
 };
 

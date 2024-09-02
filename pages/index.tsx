@@ -4,7 +4,7 @@ import Image from 'next/image';
 import RegistrationForm from '../components/RegistrationForm';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { AdminSettings } from '../types/types';
-import { getServerSideSettings } from '../utils/serverSettings';
+import { getSettings } from '../utils/kvUtils';
 
 interface HomeProps {
   settings: AdminSettings;
@@ -45,8 +45,17 @@ const Home: NextPage<HomeProps> = ({ settings }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = getServerSideSettings();
-  return { props: { settings } };
+  try {
+    const settings = await getSettings();
+    return { props: { settings } };
+  } catch (error) {
+    console.error('Failed to fetch settings:', error);
+    return { 
+      props: { 
+        settings: { appName: 'Default App Name' } // Provide default values
+      } 
+    };
+  }
 };
 
 export default Home;

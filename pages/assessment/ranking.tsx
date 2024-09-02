@@ -5,7 +5,7 @@ import { useAssessment } from '../../contexts/AssessmentContext';
 import RankingForm from '../../components/RankingForm';
 import Timer from '../../components/Timer';
 import { Ranking, AdminSettings } from '../../types/types';
-import { getServerSideSettings } from '../../utils/serverSettings';
+import { getSettings } from '../../utils/kvUtils';
 
 interface RankingPageProps {
   settings: AdminSettings;
@@ -83,7 +83,7 @@ const RankingPage = ({ settings }: RankingPageProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const settings = getServerSideSettings();
+  const settings = await getSettings();
   
   const { req } = context;
   const hasCompletedAssessment = req.cookies.hasCompletedAssessment === 'true';

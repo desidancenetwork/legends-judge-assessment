@@ -6,7 +6,7 @@ const settingsFilePath = path.join(process.cwd(), 'settings.json');
 
 function getDefaultSettings(): AdminSettings {
   return {
-    appName: "DDN Legends Judge Assessment",
+    appName: "DDN Legends Mock Judging Assessment",
     apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3000/api",
     assessment: {
       additionalTime: 300,

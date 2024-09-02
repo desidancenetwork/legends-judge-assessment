@@ -4,8 +4,8 @@ import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { AdminSettings } from '../../types/types';
-import { getServerSideSettings } from '../../utils/serverSettings';
-import { updateSettings, deleteExcessVideos } from '../../utils/api';
+import { updateSettings } from '../../utils/api';
+import { getSettings } from '../../utils/kvUtils';
 
 interface SettingsProps {
   initialSettings: AdminSettings;
@@ -107,11 +107,6 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 
     try {
       const updatedSettings = await updateSettings(settingsToSubmit);
-      
-      // Only delete excess videos if new total is less than before
-      if (Number(localSettings.assessment.totalVideos) < initialSettings.assessment.totalVideos) {
-        await deleteExcessVideos(Number(localSettings.assessment.totalVideos));
-      }
 
       setLocalSettings({
         ...updatedSettings,
@@ -235,7 +230,7 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = getServerSideSettings();
+  const settings = await getSettings();
   return { props: { initialSettings: settings } };
 };
 

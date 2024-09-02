@@ -79,15 +79,6 @@ export const updateSettings = async (settings: Partial<AdminSettings>): Promise<
   }
 };
 
-export const deleteExcessVideos = async (newTotalVideos: number): Promise<void> => {
-  try {
-    await axios.post(`${API_BASE_URL}/admin/delete-videos`, { newTotalVideos });
-  } catch (error) {
-    console.error('Error deleting excess videos:', error);
-    throw new Error('Failed to delete excess videos');
-  }
-};
-
 export const submitAssessment = async (assessmentData: AssessmentData, handwrittenNotes: File[]): Promise<{ folderId: string, pdfFileId: string, uploadedNoteIds: string[] }> => {
   try {
     const formData = new FormData();

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { AdminSettings } from '../types/types';
-import { getServerSideSettings } from '../utils/serverSettings';
+import { getSettings } from '../utils/kvUtils';
 
 interface InstructionsProps {
   settings: AdminSettings;
@@ -52,7 +52,7 @@ const Instructions = ({ settings }: InstructionsProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = getServerSideSettings();
+  const settings = await getSettings();
   return { props: { settings } };
 };
 
