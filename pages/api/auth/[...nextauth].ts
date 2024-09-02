@@ -10,8 +10,6 @@ export default NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials, req): Promise<User | null> {
-        // This is where you would usually query your database
-        // For this example, we'll use a hardcoded admin user
         if (credentials?.username === process.env.ADMIN_USERNAME && 
             credentials?.password === process.env.ADMIN_PASSWORD) {
           return { id: '1', name: 'Admin', email: 'admin@ddn-legends.com' };
@@ -37,4 +35,5 @@ export default NextAuth({
       return session;
     },
   },
+  secret: process.env.NEXTAUTH_SECRET,
 });

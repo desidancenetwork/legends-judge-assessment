@@ -32,7 +32,6 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
               id,
               file: null,
               url: null,
-              publicPath: null,
               originalName: null,
               uploading: false,
               error: null,

@@ -19,8 +19,7 @@ export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot
     return {
       id: response.data.video.id,
       file: null,
-      url: response.data.video.publicPath,
-      publicPath: response.data.video.publicPath,
+      url: response.data.video.url,
       originalName: response.data.video.originalName,
       uploading: false,
       error: null,
@@ -47,8 +46,7 @@ export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
     return response.data.videos.map((video: any) => ({
       id: video.id,
       file: null,
-      url: video.publicPath,
-      publicPath: video.publicPath,
+      url: video.url,
       originalName: video.originalName,
       uploading: false,
       error: null,
@@ -56,26 +54,6 @@ export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
   } catch (error) {
     console.error('Error fetching uploaded videos:', error);
     return [];
-  }
-};
-
-export const getSettings = async (): Promise<AdminSettings> => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/admin/settings`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching settings:', error);
-    throw new Error('Failed to fetch settings');
-  }
-};
-
-export const updateSettings = async (settings: Partial<AdminSettings>): Promise<AdminSettings> => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/admin/settings`, settings);
-    return response.data;
-  } catch (error) {
-    console.error('Error updating settings:', error);
-    throw new Error('Failed to update settings');
   }
 };
 

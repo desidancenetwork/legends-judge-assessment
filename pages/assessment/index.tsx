@@ -17,8 +17,8 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const [, setIsVideoPlaying] = useState(false);
+  const [, setIsVideoEnded] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [pendingNote, setPendingNote] = useState<string | null>(null);
   const currentNoteRef = useRef<string>('');
@@ -34,7 +34,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
         const response = await fetch('/api/admin/upload-video');
         const data = await response.json();
         if (Array.isArray(data.videos)) {
-          setVideos(data.videos.map((video: any) => video.publicPath));
+          setVideos(data.videos.map((video: any) => video.url));
         } else {
           console.error('Unexpected response structure:', data);
         }

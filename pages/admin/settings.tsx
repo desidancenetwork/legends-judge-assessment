@@ -4,8 +4,8 @@ import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { AdminSettings } from '../../types/types';
-import { updateSettings } from '../../utils/api';
-import { getSettings } from '../../utils/kvUtils';
+import { getSettings, updateSettings } from '../../utils/kvUtils';
+import axios from 'axios';
 
 interface SettingsProps {
   initialSettings: AdminSettings;
@@ -106,8 +106,10 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     };
 
     try {
-      const updatedSettings = await updateSettings(settingsToSubmit);
-
+      const response = await axios.post('/api/admin/settings', settingsToSubmit);
+      console.log('Update response:', response.data);
+      
+      const updatedSettings = response.data;
       setLocalSettings({
         ...updatedSettings,
         assessment: {
@@ -119,7 +121,8 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 
       alert('Settings updated successfully!');
     } catch (err) {
-      setError('Failed to update settings. Please try again.');
+      console.error('Error updating settings:', err);
+      setError(`Failed to update settings. Please try again.`);
     } finally {
       setSaving(false);
     }
@@ -230,8 +233,13 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const settings = await getSettings();
-  return { props: { initialSettings: settings } };
+  try {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings`);
+    return { props: { initialSettings: response.data } };
+  } catch (error) {
+    console.error('Error fetching initial settings:', error);
+    return { props: { initialSettings: {} } };
+  }
 };
 
 export default Settings;

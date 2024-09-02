@@ -14,12 +14,13 @@ const AdminLogin = () => {
       redirect: false,
       username,
       password,
+      callbackUrl: '/admin/dashboard'
     });
 
     if (result?.error) {
       setError('Invalid username or password');
-    } else {
-      router.push('/admin/dashboard');
+    } else if (result?.url) {
+      router.push(result.url);
     }
   };
 

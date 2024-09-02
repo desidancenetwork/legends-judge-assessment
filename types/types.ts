@@ -18,7 +18,6 @@ export type VideoSlot = {
   id: string;
   file: File | null;
   url: string | null;
-  publicPath: string | null;
   originalName: string | null;
   uploading: boolean;
   error: string | null;
@@ -46,7 +45,6 @@ export type AssessmentData = {
   
 export type AdminSettings = {
   appName: string;
-  apiBaseUrl: string;
   assessment: {
     additionalTime: number;
     totalVideos: number;

@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import fs from 'fs';
-import path from 'path';
-import { IncomingForm } from 'formidable';
+import { IncomingForm, File } from 'formidable';
+import { put, list, del } from '@vercel/blob';
 import { getServerSideSettings } from '../../../utils/serverSettings';
+import fs from 'fs';
 
 export const config = {
   api: {
@@ -10,21 +10,19 @@ export const config = {
   },
 };
 
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
     try {
-      const files = fs.readdirSync(UPLOADS_DIR);
-      const videos = files
-        .filter(file => file.startsWith('video'))
-        .map(fileName => {
-          const [slotId, originalName] = fileName.split('_');
+      const { blobs } = await list();
+      const videos = blobs
+        .filter(blob => blob.pathname.startsWith('video'))
+        .map(blob => {
+          const [slotId, originalName] = blob.pathname.split('_');
           return {
             id: slotId.replace('video', ''),
-            fileName,
+            fileName: blob.pathname,
             originalName,
-            publicPath: `/uploads/${fileName}`,
+            url: blob.url,
           };
         });
       res.status(200).json({ videos });
@@ -33,16 +31,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Error retrieving videos', error: (error as Error).message });
     }
   } else if (req.method === 'POST') {
-    if (!fs.existsSync(UPLOADS_DIR)) {
-      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-    }
-
     const settings = getServerSideSettings();
     const totalVideos = settings.assessment.totalVideos;
 
     const form = new IncomingForm({
-      uploadDir: UPLOADS_DIR,
-      keepExtensions: true,
       maxFileSize: 200 * 1024 * 1024, // 200MB
     });
 
@@ -67,30 +59,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Invalid slotId' });
       }
 
-      // Remove existing video for this slot, if any
-      const existingFiles = fs.readdirSync(UPLOADS_DIR);
-      const existingFile = existingFiles.find(f => f.startsWith(`video${slotId}_`));
-      if (existingFile) {
-        fs.unlinkSync(path.join(UPLOADS_DIR, existingFile));
+      try {
+        // Delete existing video for this slot, if any
+        const { blobs } = await list();
+        const existingBlob = blobs.find(blob => blob.pathname.startsWith(`video${slotId}_`));
+        if (existingBlob) {
+          await del(existingBlob.url);
+        }
+
+        // Upload new video
+        const fileName = `video${slotId}_${file.originalFilename}`;
+        const fileStream = fs.createReadStream(file.filepath);
+        const blob = await put(fileName, fileStream, {
+          access: 'public',
+          addRandomSuffix: false,
+        });
+
+        // Clean up the temporary file
+        fs.unlinkSync(file.filepath);
+
+        res.status(200).json({ 
+          message: 'Video uploaded successfully', 
+          video: { 
+            id: slotId, 
+            fileName: blob.pathname, 
+            originalName: file.originalFilename, 
+            url: blob.url 
+          } 
+        });
+      } catch (error) {
+        console.error('Error uploading to Vercel Blob:', error);
+        res.status(500).json({ message: 'Error uploading video', error: (error as Error).message });
       }
-
-      const oldPath = file.filepath;
-      const fileName = `video${slotId}_${file.originalFilename}`;
-      const newPath = path.join(UPLOADS_DIR, fileName);
-
-      fs.renameSync(oldPath, newPath);
-
-      const publicPath = `/uploads/${fileName}`;
-
-      res.status(200).json({ 
-        message: 'Video uploaded successfully', 
-        video: { 
-          id: slotId, 
-          fileName, 
-          originalName: file.originalFilename, 
-          publicPath 
-        } 
-      });
     });
   } else {
     res.status(405).json({ message: 'Method not allowed' });
