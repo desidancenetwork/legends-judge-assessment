@@ -4,8 +4,6 @@ import { AssessmentData } from '../../types/types';
 // @ts-ignore
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import formidable from 'formidable';
-import fs from 'fs/promises';
 
 export const config = {
   api: {
@@ -101,29 +99,8 @@ export default async function handler(
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  const form = formidable();
-
   try {
-    const [fields, files] = await new Promise<[formidable.Fields, formidable.Files]>((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve([fields, files]);
-      });
-    });
-
-    let assessmentDataString: string;
-
-    if (Array.isArray(fields.assessmentData)) {
-      assessmentDataString = fields.assessmentData[0];
-    } else if (typeof fields.assessmentData === 'string') {
-      assessmentDataString = fields.assessmentData;
-    } else {
-      throw new Error('Assessment data is missing or in an incorrect format');
-    }
-
-    const assessmentData: AssessmentData = JSON.parse(assessmentDataString);
-
-    const handwrittenNotes = files.notes ? (Array.isArray(files.notes) ? files.notes : [files.notes]) : [];
+    const { assessmentData, handwrittenNotes } = req.body;
 
     // Create a folder for the user
     const folderName = `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
@@ -140,15 +117,14 @@ export default async function handler(
 
     // Upload handwritten notes if any
     const uploadedNoteIds = await Promise.all(
-      handwrittenNotes.map(async (note: formidable.File, index: number) => {
-        const content = await fs.readFile(note.filepath);
+      handwrittenNotes.map(async (note: { data: string, type: string }, index: number) => {
+        const content = Buffer.from(note.data.split(',')[1], 'base64');
         const noteId = await uploadFileToDrive(
           content,
-          `${assessmentData.userInfo.name.replace(/\s+/g, '_')}handwritten_note${index}.png`,
-          note.mimetype || 'image/png',
+          `${assessmentData.userInfo.name.replace(/\s+/g, '_')}handwritten_note${index}.${note.type.split('/')[1]}`,
+          note.type,
           folderId
         );
-        await fs.unlink(note.filepath);
         return noteId;
       })
     );

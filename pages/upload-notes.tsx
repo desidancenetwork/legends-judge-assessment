@@ -46,7 +46,7 @@ const UploadNotes = () => {
       alert('User information is missing. Please go back and fill in your details.');
       return;
     }
-
+  
     setIsUploading(true);
     try {
       const assessmentData = {
@@ -54,9 +54,31 @@ const UploadNotes = () => {
         videoNotes,
         rankings,
       };
-
-      await submitAssessment(assessmentData, files);
-      setHasCompletedAssessment(false); // Reset the assessment completion status
+  
+      const handwrittenNotes = await Promise.all(
+        files.map(async (file) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve({ data: reader.result, type: file.type });
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+  
+      const response = await fetch('/api/submit-assessment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assessmentData, handwrittenNotes }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to submit assessment');
+      }
+  
+      setHasCompletedAssessment(false);
       document.cookie = "hasCompletedAssessment=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "hasCompletedRanking=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       alert('Assessment submitted successfully!');
