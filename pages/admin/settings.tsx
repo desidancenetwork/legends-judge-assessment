@@ -106,10 +106,10 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     };
 
     try {
-      const response = await axios.post('/api/admin/settings', settingsToSubmit);
-      console.log('Update response:', response.data);
-      
-      const updatedSettings = response.data;
+      await updateSettings(settingsToSubmit);
+      const updatedSettings = await getSettings();
+      console.log('Update response:', updateSettings);
+
       setLocalSettings({
         ...updatedSettings,
         assessment: {
