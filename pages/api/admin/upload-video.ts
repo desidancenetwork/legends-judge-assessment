@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm, File } from 'formidable';
 import { put, list, del } from '@vercel/blob';
+import { getSettings } from '../../../utils/kvUtils';
 import fs from 'fs';
 
 export const config = {
@@ -30,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Error retrieving videos', error: (error as Error).message });
     }
   } else if (req.method === 'POST') {
-    const settings = getServerSideSettings();
+    const settings = await getSettings();
     const totalVideos = settings.assessment.totalVideos;
 
     const form = new IncomingForm({
