@@ -234,8 +234,8 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 
 export const getServerSideProps: GetServerSideProps = async () => {
   try {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings`);
-    return { props: { initialSettings: response.data } };
+    const initialSettings = await getSettings();
+    return { props: { initialSettings } };
   } catch (error) {
     console.error('Error fetching initial settings:', error);
     return { props: { initialSettings: {} } };

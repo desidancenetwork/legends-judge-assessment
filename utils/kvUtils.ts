@@ -5,6 +5,7 @@ const SETTINGS_KEY = 'siteSettings';
 
 export async function getSettings(): Promise<AdminSettings> {
   const settings = await kv.get<AdminSettings>(SETTINGS_KEY);
+  console.log('Retrieved settings from KV:', settings);
   return settings || getDefaultSettings();
 }
 
