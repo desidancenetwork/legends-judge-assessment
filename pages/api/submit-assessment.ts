@@ -100,7 +100,16 @@ export default async function handler(
   }
 
   try {
-    const { assessmentData, handwrittenNotes } = req.body;
+    let parsedBody;
+    if (typeof req.body === 'string') {
+      parsedBody = JSON.parse(req.body);
+    } else if (typeof req.body === 'object') {
+      parsedBody = req.body;
+    } else {
+      throw new Error('Invalid request body');
+    }
+
+    const { assessmentData, handwrittenNotes } = parsedBody;
 
     // Create a folder for the user
     const folderName = `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;

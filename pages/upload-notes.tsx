@@ -75,7 +75,8 @@ const UploadNotes = () => {
       });
   
       if (!response.ok) {
-        throw new Error('Failed to submit assessment');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit assessment');
       }
   
       setHasCompletedAssessment(false);
