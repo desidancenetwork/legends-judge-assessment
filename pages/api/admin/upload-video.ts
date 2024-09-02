@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm, File } from 'formidable';
 import { put, list, del } from '@vercel/blob';
-import { getServerSideSettings } from '../../../utils/serverSettings';
 import fs from 'fs';
 
 export const config = {
