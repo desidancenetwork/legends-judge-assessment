@@ -31,7 +31,6 @@ export const createFolder = async (folderName: string, parentFolderId?: string):
 
 export const uploadFileToDrive = async (fileContent: Buffer, fileName: string, mimeType: string, folderId: string) => {
   try {
-    console.log('Uploading file to Google Drive:', fileName);
     const fileMetadata = {
       name: fileName,
       parents: [folderId],

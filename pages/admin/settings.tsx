@@ -108,7 +108,6 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     try {
       await updateSettings(settingsToSubmit);
       const updatedSettings = await getSettings();
-      console.log('Update response:', updateSettings);
 
       setLocalSettings({
         ...updatedSettings,
