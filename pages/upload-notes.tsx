@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useAssessment } from '../contexts/AssessmentContext';
-import { submitAssessment } from '../utils/api';
 
 const UploadNotes = () => {
   const router = useRouter();
@@ -11,7 +10,7 @@ const UploadNotes = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!userInfo || !hasCompletedRanking) {
+    if (!userInfo ?? !hasCompletedRanking) {
       router.push('/assessment/ranking');
     }
   }, [userInfo, hasCompletedRanking, router]);
@@ -78,7 +77,7 @@ const UploadNotes = () => {
   
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit assessment');
+        throw new Error(errorData.message ?? 'Failed to submit assessment');
       }
   
       const responseData = await response.json();
@@ -101,7 +100,7 @@ const UploadNotes = () => {
       <div className="w-full max-w-2xl space-y-8">
         <h1 className="text-4xl font-bold mb-4 text-white text-center text-shadow-lg">Upload Handwritten Notes</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
-          <p className="text-white mb-4">Uploading handwritten notes is optional. If you have any, you can upload them here.</p>
+          <p className="text-white mb-4">Uploading handwritten notes is optional. If you have any, you may upload them here.</p>
           <input 
             type="file" 
             onChange={handleFileChange} 

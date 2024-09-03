@@ -23,7 +23,9 @@ const Layout: React.FC<LayoutProps> = ({ children, title = 'DDN Legends Dance Ch
         <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
       <header className="bg-opacity-80 bg-gray-800 p-4 flex justify-between items-center relative z-10">
-        <Image src="/ddn-logo.png" alt="DDN Logo" width={100} height={50}/>
+        <Link href="https://www.desidancenetwork.org" rel="noopener noreferrer" target="_blank">
+          <Image src="/ddn-logo.png" alt="DDN Logo" width={100} height={50}/>
+        </Link>
         <div className="space-x-4">
           {!isHomePage && (
             <Link href="/">

@@ -53,7 +53,7 @@ function generatePDF(data: AssessmentData): Buffer {
   });
   
   // Get the Y position after the video notes table
-  const finalY = (doc as any).lastAutoTable.finalY || yPosition;
+  const finalY = (doc as any).lastAutoTable.finalY ?? yPosition;
   
   // Add rankings table title
   yPosition = addTableTitle('Rankings', finalY + 10);
@@ -101,7 +101,7 @@ export default async function handler(
   try {
     const { assessmentData, handwrittenNotes } = req.body;
 
-    if (!assessmentData || !handwrittenNotes) {
+    if (!assessmentData ?? !handwrittenNotes) {
       return res.status(400).json({ message: 'Missing required data' });
     }
 
@@ -121,7 +121,7 @@ export default async function handler(
         const content = Buffer.from(note.data.split(',')[1], 'base64');
         const noteId = await uploadFileToDrive(
           content,
-          `${assessmentData.userInfo.name.replace(/\s+/g, '_')}handwritten_note${index}.${note.type.split('/')[1]}`,
+          `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_note${index + 1}.${note.type.split('/')[1]}`,
           note.type,
           folderId
         );

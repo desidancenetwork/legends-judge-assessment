@@ -5,7 +5,7 @@ const SETTINGS_KEY = 'siteSettings';
 
 export async function getSettings(): Promise<AdminSettings> {
   const settings = await kv.get<AdminSettings>(SETTINGS_KEY);
-  return settings || getDefaultSettings();
+  return settings ?? getDefaultSettings();
 }
 
 export async function updateSettings(newSettings: AdminSettings): Promise<void> {

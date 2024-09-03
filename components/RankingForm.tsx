@@ -27,7 +27,7 @@ const RankingItem: React.FC<RankingItemProps> = React.memo(({
   videoNote, 
   isNotesExpanded,
   isJustificationExpanded,
-  onToggleNotes, 
+  onToggleNotes,
   onToggleJustification,
   onJustificationChange,
 }) => {
@@ -51,47 +51,51 @@ const RankingItem: React.FC<RankingItemProps> = React.memo(({
             </div>
             <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
             <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
-            <div className="ml-auto flex items-center">
-              <button
-                type="button"
-                onClick={onToggleNotes}
-                className="text-white mr-2"
-              >
-                notes {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
-              </button>
-              <button
-                type="button"
-                onClick={onToggleJustification}
-                className="text-white"
-              >
-                Justification {isJustificationExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
-              </button>
-            </div>
           </div>
-          {isNotesExpanded && (
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold text-white mb-1">notes:</h4>
-              <textarea
-                value={videoNote}
-                readOnly
-                className="w-full h-24 p-2 bg-gray-600 bg-opacity-50 text-white border border-gray-600 rounded"
-              />
-            </div>
-          )}
-          {isJustificationExpanded && (
-            <div className="mb-4">
-              <h4 className="text-sm font-semibold text-white mb-1">justification:</h4>
-              <textarea
-                value={ranking.justification}
-                onChange={handleJustificationChange}
-                placeholder={`Please justify your ranking for ${ranking.team}`}
-                className="w-full h-24 p-2 bg-gray-700 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
-              />
-              <div className="text-right text-sm text-gray-400 mt-1">
-                {ranking.justification.length} / 500 characters
+          
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={onToggleNotes}
+              className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
+            >
+              <span>Notes</span>
+              {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+            </button>
+            {isNotesExpanded && (
+              <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
+                <textarea
+                  value={videoNote}
+                  readOnly
+                  className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded"
+                />
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={onToggleJustification}
+              className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
+            >
+              <span>Justification</span>
+              {isJustificationExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+            </button>
+            {isJustificationExpanded && (
+              <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
+                <textarea
+                  value={ranking.justification}
+                  onChange={handleJustificationChange}
+                  placeholder={`Please justify your ranking for ${ranking.team}`}
+                  className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
+                />
+                <div className="text-right text-sm text-gray-400 mt-1">
+                  {ranking.justification.length} / 1500 characters
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </Draggable>
@@ -117,7 +121,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
     }))
   );
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
-  const [expandedJustifications, setExpandedJustifications] = useState<Set<string>>(
+  const [expandedJustifications, setExpandedJustifications] = useState<Set<string>>(() => 
     new Set(rankings.map(ranking => ranking.id))
   );
 
@@ -152,7 +156,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
 
   const handleJustificationChange = useCallback((id: string, value: string) => {
     setRankings(prev => prev.map(ranking => 
-      ranking.id === id ? { ...ranking, justification: value.slice(0, 500) } : ranking
+      ranking.id === id ? { ...ranking, justification: value.slice(0, 1500) } : ranking
     ));
   }, []);
 
@@ -214,7 +218,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
           type="submit"
           className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"
         >
-          Submit Rankings
+          Submit
         </button>
       </form>
     </div>

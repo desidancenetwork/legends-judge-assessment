@@ -28,7 +28,7 @@ export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot
     console.error('Error uploading video:', error);
     if (axios.isAxiosError(error) && error.response) {
       console.error('Response data:', error.response.data);
-      throw new Error(error.response.data.message || 'Failed to upload video');
+      throw new Error(error.response.data.message ?? 'Failed to upload video');
     }
     throw new Error('Failed to upload video');
   }
@@ -38,7 +38,7 @@ export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
   try {
     const response = await axios.get('/api/admin/upload-video');
     
-    if (!response.data || !Array.isArray(response.data.videos)) {
+    if (!response.data ?? !Array.isArray(response.data.videos)) {
       console.error('Unexpected API response structure:', response.data);
       return [];
     }

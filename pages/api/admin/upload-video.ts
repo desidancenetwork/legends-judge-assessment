@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const slotNumber = parseInt(slotId);
-      if (isNaN(slotNumber) || slotNumber < 1 || slotNumber > totalVideos) {
+      if (isNaN(slotNumber) ?? slotNumber < 1 ?? slotNumber > totalVideos) {
         return res.status(400).json({ message: 'Invalid slotId' });
       }
 

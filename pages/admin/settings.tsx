@@ -66,17 +66,17 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     }
 
     const totalVideos = Number(assessment.totalVideos);
-    if (isNaN(totalVideos) || totalVideos < 0 || totalVideos > 5) {
+    if (isNaN(totalVideos) ?? totalVideos < 0 ?? totalVideos > 5) {
       return 'Total videos must be between 0 and 5.';
     }
 
     const additionalTime = Number(assessment.additionalTime);
-    if (isNaN(additionalTime) || additionalTime < 0 || additionalTime > 10) {
+    if (isNaN(additionalTime) ?? additionalTime < 0 ?? additionalTime > 10) {
       return 'Additional time must be between 0 and 10 minutes.';
     }
 
     const rankingTime = Number(assessment.rankingTime);
-    if (isNaN(rankingTime) || rankingTime < 0 || rankingTime > 30) {
+    if (isNaN(rankingTime) ?? rankingTime < 0 ?? rankingTime > 30) {
       return 'Ranking time must be between 0 and 30 minutes.';
     }
 

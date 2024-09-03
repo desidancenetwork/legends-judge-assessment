@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { GetServerSideProps } from 'next';
 import { useAssessment } from '../contexts/AssessmentContext';
 import { AdminSettings } from '../types/types';
@@ -31,14 +32,26 @@ const Instructions = ({ settings }: InstructionsProps) => {
         </div>
         <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 shadow-xl">
           <ul className="list-disc pl-5 space-y-2 mb-6 text-gray-200">
-            <li>You will watch {settings.assessment.totalVideos} dance performance videos.</li>
-            <li>Each video is about 10 minutes long.</li>
-            <li>Once you start, you cannot pause or replay the videos.</li>
-            <li>You may use the duration of each video plus an additional {settings.assessment.additionalTime / 60} minutes after to complete your notes.</li>
-            <li>After watching all videos, you&apos;ll have {settings.assessment.rankingTime / 60} minutes to rank the performances and provide justifications.</li>
-            <li>If the timer runs out before you finish, whatever you have typed will be submitted.</li>
+            <li>You will be required to watch a pre-selected compilation of {settings.assessment.totalVideos} back row performances.</li>
+            <li>Take notes in the provided area during each video.</li>
+            <li>You will have the length of each video PLUS an additional {settings.assessment.additionalTime / 60} minutes after to complete your notes.</li>
+            <li>Once started, videos cannot be paused or replayed. Notes auto-submit when time expires.</li>
+            <li>Notes are for your personal use &dash; they do not have to be perfect/formal! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for the season.</li>
+            <li>Using scratch paper for handwritten notes is permitted; you will have the option to upload a picture of them at the end of the assessment.</li>
+            <li>After all videos, you have {settings.assessment.rankingTime / 60} minutes to rank performances and explain your rankings.</li>
+            <li>Use complete sentences for the ranking explanations. Responses auto-submit when time expires.</li>
             <li>Ensure you have a stable internet connection before beginning.</li>
           </ul>
+          <br />
+          <p>Complete this mock assessment as thoroughly as possible. If you have any questions or run into any issues, please reach out to Legends Judging Relations at
+            <Link 
+              href="mailto:legendsjudging@desidancenetwork.com"
+              className="text-indigo-400 pl-1 hover:text-indigo-300 underline"
+            >
+              legendsjudging@desidancenetwork.com
+            </Link>.
+          </p>
+          <br />
           <button 
             onClick={handleStart}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"

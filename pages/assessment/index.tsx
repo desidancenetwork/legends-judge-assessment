@@ -24,6 +24,10 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const currentNoteRef = useRef<string>('');
   const [progress, setProgress] = useState(0);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   useEffect(() => {
     if (!userInfo) {
       router.push('/');
@@ -55,6 +59,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
     setPendingNote(null);
     currentNoteRef.current = '';
     setProgress(0);
+    scrollToTop();
   }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
@@ -90,6 +95,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
         completeAssessment();
       }
       setPendingNote(null);
+      scrollToTop();
     }
   }, [pendingNote, addVideoNote, currentVideoIndex, videos.length, setCurrentVideoIndex, completeAssessment]);
 

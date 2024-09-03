@@ -9,6 +9,28 @@ const RegistrationForm: React.FC = () => {
   const router = useRouter();
   const { setUserInfo } = useAssessment();
 
+  const validateEmail = async (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    if (!emailRegex.test(email)) {
+      return "Invalid email format";
+    }
+
+    // Check if the domain has a valid MX record
+    const domain = email.split('@')[1];
+    try {
+      const response = await fetch(`/api/validate-email-domain?domain=${domain}`);
+      const { isValid } = await response.json();
+      if (!isValid) {
+        return "Invalid email domain";
+      }
+    } catch (error) {
+      console.error("Error validating email domain:", error);
+      return "Error validating email";
+    }
+
+    return true;
+  };
+
   const onSubmit = async (data: FormData) => {
     setUserInfo({ name: data.name, email: data.email });
     router.push('/instructions');
@@ -33,7 +55,10 @@ const RegistrationForm: React.FC = () => {
         <input
           id="email"
           type="email"
-          {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })}
+          {...register("email", { 
+            required: "Email is required", 
+            validate: validateEmail
+          })}
           className="mt-1 block w-full rounded-md border-gray-300 bg-white/20 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-300"
           placeholder="Enter your email"
         />
@@ -47,7 +72,7 @@ const RegistrationForm: React.FC = () => {
           type="email"
           {...register("confirmEmail", { 
             required: "Please confirm your email",
-            validate: (value) => value === watch('email') || "Emails do not match"
+            validate: (value) => value === watch('email') ?? "Emails do not match"
           })}
           className="mt-1 block w-full rounded-md border-gray-300 bg-white/20 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-300"
           placeholder="Confirm your email"

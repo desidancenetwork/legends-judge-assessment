@@ -45,17 +45,8 @@ const Home: NextPage<HomeProps> = ({ settings }) => {
 };
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  try {
-    const settings = await getSettings();
-    return { props: { settings } };
-  } catch (error) {
-    console.error('Failed to fetch settings:', error);
-    return { 
-      props: { 
-        settings: { appName: 'Default App Name' } // Provide default values
-      } 
-    };
-  }
+  const settings = await getSettings();
+  return { props: { settings } };
 };
 
 export default Home;
