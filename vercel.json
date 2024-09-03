@@ -4,9 +4,15 @@
         "maxDuration": 60
       }
     },
-    "api": {
-      "bodyParser": {
-        "sizeLimit": "100mb"
+    "headers": [
+      {
+        "source": "/api/(.*)",
+        "headers": [
+          {
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
+          }
+        ]
       }
-    }
+    ]
 }

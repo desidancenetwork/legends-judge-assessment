@@ -1,5 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { IncomingForm, File } from 'formidable';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { IncomingForm } from 'formidable';
 import { put, list, del } from '@vercel/blob';
 import { getSettings } from '../../../utils/kvUtils';
 import fs from 'fs';
@@ -7,10 +7,11 @@ import fs from 'fs';
 export const config = {
   api: {
     bodyParser: false,
+    sizeLimit: '100mb'
   },
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const { blobs } = await list();
