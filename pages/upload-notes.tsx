@@ -66,18 +66,22 @@ const UploadNotes = () => {
         })
       );
   
+      const payload = JSON.stringify({ assessmentData, handwrittenNotes });
+  
       const response = await fetch('/api/submit-assessment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ assessmentData, handwrittenNotes }),
+        body: payload,
       });
   
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to submit assessment');
       }
+  
+      const responseData = await response.json();
   
       setHasCompletedAssessment(false);
       document.cookie = "hasCompletedAssessment=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

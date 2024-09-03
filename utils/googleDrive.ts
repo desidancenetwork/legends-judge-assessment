@@ -2,7 +2,15 @@ import * as google from 'googleapis';
 import { Readable } from 'stream';
 
 const auth = new google.Auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS ?? '{}'),
+  credentials: {
+    type: 'service_account',
+    project_id: process.env.GOOGLE_CREDENTIALS_PROJECT_ID,
+    private_key_id: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY_ID,
+    private_key: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY,
+    client_email: process.env.GOOGLE_CREDENTIALS_CLIENT_EMAIL,
+    client_id: process.env.GOOGLE_CREDENTIALS_CLIENT_ID,
+    universe_domain: 'googleapis.com',
+  },
   scopes: ['https://www.googleapis.com/auth/drive.file'],
 });
 

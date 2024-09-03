@@ -1,13 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createFolder, uploadFileToDrive } from '../../utils/googleDrive';
 import { AssessmentData } from '../../types/types';
-// @ts-ignore
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: true,
   },
 };
 
@@ -100,22 +99,15 @@ export default async function handler(
   }
 
   try {
-    let parsedBody;
-    if (typeof req.body === 'string') {
-      parsedBody = JSON.parse(req.body);
-    } else if (typeof req.body === 'object') {
-      parsedBody = req.body;
-    } else {
-      throw new Error('Invalid request body');
+    const { assessmentData, handwrittenNotes } = req.body;
+
+    if (!assessmentData || !handwrittenNotes) {
+      return res.status(400).json({ message: 'Missing required data' });
     }
 
-    const { assessmentData, handwrittenNotes } = parsedBody;
-
-    // Create a folder for the user
     const folderName = `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
     const folderId = await createFolder(folderName);
 
-    // Generate and upload PDF report
     const pdfBuffer = generatePDF(assessmentData);
     const pdfFileId = await uploadFileToDrive(
       pdfBuffer,
@@ -124,7 +116,6 @@ export default async function handler(
       folderId
     );
 
-    // Upload handwritten notes if any
     const uploadedNoteIds = await Promise.all(
       handwrittenNotes.map(async (note: { data: string, type: string }, index: number) => {
         const content = Buffer.from(note.data.split(',')[1], 'base64');
@@ -145,7 +136,10 @@ export default async function handler(
       uploadedNoteIds 
     });
   } catch (error) {
-    console.error('Error submitting assessment:', error);
-    res.status(500).json({ message: 'Error submitting assessment', error: JSON.stringify(error, Object.getOwnPropertyNames(error)) });
+    console.error('Error in submit-assessment:', error);
+    res.status(500).json({ 
+      message: 'Error submitting assessment', 
+      error: error instanceof Error ? error.stack : String(error)
+    });
   }
 }
