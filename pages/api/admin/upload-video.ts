@@ -1,13 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { IncomingForm } from 'formidable';
 import { put, list, del } from '@vercel/blob';
 import { getSettings } from '../../../utils/kvUtils';
-import fs from 'fs';
 
 export const config = {
   api: {
-    bodyParser: false,
-    sizeLimit: '100mb'
+    bodyParser: true,
   },
 };
 
@@ -32,67 +29,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ message: 'Error retrieving videos', error: (error as Error).message });
     }
   } else if (req.method === 'POST') {
+    const { action, slotId, fileName, contentType } = req.body;
+
+    if (!action || !slotId) {
+      return res.status(400).json({ message: 'Missing required parameters' });
+    }
+
     const settings = await getSettings();
     const totalVideos = settings.assessment.totalVideos;
+    const slotNumber = parseInt(slotId);
 
-    const form = new IncomingForm({
-      maxFileSize: 200 * 1024 * 1024, // 200MB
-    });
+    if (isNaN(slotNumber) || slotNumber < 1 || slotNumber > totalVideos) {
+      return res.status(400).json({ message: 'Invalid slotId' });
+    }
 
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        console.error('Error parsing form:', err);
-        return res.status(500).json({ message: 'Error uploading video', error: err.message });
-      }
-
-      const file = Array.isArray(files.video) ? files.video[0] : files.video;
-      if (!file) {
-        return res.status(400).json({ message: 'No video file uploaded' });
-      }
-
-      const slotId = Array.isArray(fields.slotId) ? fields.slotId[0] : fields.slotId;
-      if (!slotId) {
-        return res.status(400).json({ message: 'Missing slotId' });
-      }
-
-      const slotNumber = parseInt(slotId);
-      if (isNaN(slotNumber) || slotNumber < 1 || slotNumber > totalVideos) {
-        return res.status(400).json({ message: 'Invalid slotId' });
-      }
-
-      try {
-        // Delete existing video for this slot, if any
-        const { blobs } = await list();
-        const existingBlob = blobs.find(blob => blob.pathname.startsWith(`video${slotId}_`));
-        if (existingBlob) {
-          await del(existingBlob.url);
+    try {
+      if (action === 'getUploadUrl') {
+        if (!fileName || !contentType) {
+          return res.status(400).json({ message: 'Missing fileName or contentType' });
         }
 
-        // Upload new video
-        const fileName = `video${slotId}_${file.originalFilename}`;
-        const fileStream = fs.createReadStream(file.filepath);
-        const blob = await put(fileName, fileStream, {
+        const { url: uploadUrl, pathname } = await put(`video${slotId}_${fileName}`, Buffer.from(''), {
+          contentType,
           access: 'public',
           addRandomSuffix: false,
         });
 
-        // Clean up the temporary file
-        fs.unlinkSync(file.filepath);
+        res.status(200).json({ uploadUrl, pathname });
+      } else if (action === 'confirmUpload') {
+        if (!fileName) {
+          return res.status(400).json({ message: 'Missing fileName' });
+        }
+
+        // Delete existing video for this slot, if any
+        const { blobs } = await list();
+        const existingBlob = blobs.find(blob => blob.pathname.startsWith(`video${slotId}_`));
+        if (existingBlob && existingBlob.pathname !== fileName) {
+          await del(existingBlob.url);
+        }
+
+        const confirmedBlob = blobs.find(blob => blob.pathname === fileName);
+        if (!confirmedBlob) {
+          return res.status(404).json({ message: 'Uploaded file not found' });
+        }
 
         res.status(200).json({ 
-          message: 'Video uploaded successfully', 
+          message: 'Video upload confirmed', 
           video: { 
             id: slotId, 
-            fileName: blob.pathname, 
-            originalName: file.originalFilename, 
-            url: blob.url 
+            fileName, 
+            originalName: fileName.split('_')[1], 
+            url: confirmedBlob.url 
           } 
         });
-      } catch (error) {
-        console.error('Error uploading to Vercel Blob:', error);
-        res.status(500).json({ message: 'Error uploading video', error: (error as Error).message });
+      } else {
+        res.status(400).json({ message: 'Invalid action' });
       }
-    });
+    } catch (error) {
+      console.error('Error processing request:', error);
+      res.status(500).json({ message: 'Error processing request', error: (error as Error).message });
+    }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
   }

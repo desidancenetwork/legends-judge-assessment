@@ -1,35 +1,44 @@
 import axios from 'axios';
-import { AssessmentData, AdminSettings, VideoSlot } from '../types/types';
+import { AssessmentData, VideoSlot } from '../types/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot> => {
-  const formData = new FormData();
-  formData.append('video', file);
-  formData.append('slotId', slotId);
-
   try {
-    const response = await axios.post('/api/admin/upload-video', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      timeout: 120000, // 2 minutes timeout
+    const response = await axios.post('/api/admin/upload-video', { 
+      action: 'getUploadUrl',
+      slotId,
+      fileName: file.name,
+      contentType: file.type
     });
 
+    const { uploadUrl, pathname } = response.data;
+
+    // Step 2: Upload the file directly to Vercel Blob
+    await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type }
+    });
+
+    const confirmResponse = await axios.post('/api/admin/upload-video', {
+      action: 'confirmUpload',
+      slotId,
+      fileName: pathname
+    });
+
+    const { video } = confirmResponse.data;
+
     return {
-      id: response.data.video.id,
+      id: video.id,
       file: null,
-      url: response.data.video.url,
-      originalName: response.data.video.originalName,
+      url: video.url,
+      originalName: video.originalName,
       uploading: false,
       error: null,
     };
   } catch (error) {
     console.error('Error uploading video:', error);
-    if (axios.isAxiosError(error) && error.response) {
-      console.error('Response data:', error.response.data);
-      throw new Error(error.response.data.message ?? 'Failed to upload video');
-    }
     throw new Error('Failed to upload video');
   }
 };
