@@ -106,15 +106,17 @@ const UploadNotes = () => {
             onChange={handleFileChange} 
             accept="image/*,application/pdf" 
             multiple
-            className="mb-4 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+            className="mb-1 text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
           />
-          <button 
-            onClick={handleFinish}
-            disabled={isUploading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"
-          >
-            {isUploading ? 'Submitting...' : files.length > 0 ? 'Upload and Finish' : 'Finish'}
-          </button>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleFinish}
+              disabled={isUploading}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {isUploading ? 'Submitting...' : files.length > 0 ? 'Upload and Finish' : 'Finish'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

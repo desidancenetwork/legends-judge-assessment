@@ -42,7 +42,6 @@ const Instructions = ({ settings }: InstructionsProps) => {
             <li>Use complete sentences for the ranking explanations. Responses auto-submit when time expires.</li>
             <li>Ensure you have a stable internet connection before beginning.</li>
           </ul>
-          <br />
           <p>Complete this mock assessment as thoroughly as possible. If you have any questions or run into any issues, please reach out to Legends Judging Relations at
             <Link 
               href="mailto:legendsjudging@desidancenetwork.com"
@@ -51,13 +50,14 @@ const Instructions = ({ settings }: InstructionsProps) => {
               legendsjudging@desidancenetwork.com
             </Link>.
           </p>
-          <br />
-          <button 
-            onClick={handleStart}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"
-          >
-            Start
-          </button>
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={handleStart}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Start
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -213,13 +213,14 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
             )}
           </Droppable>
         </DragDropContext>
-
-        <button
-          type="submit"
-          className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out shadow-lg"
-        >
-          Submit
-        </button>
+        <div className="flex justify-center mt-6">
+          <button
+            type="submit"
+            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Submit
+          </button>
+        </div>
       </form>
     </div>
   );

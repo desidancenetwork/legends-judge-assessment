@@ -1,0 +1,12 @@
+{
+    "functions": {
+      "pages/api/admin/upload-video.ts": {
+        "maxDuration": 60
+      }
+    },
+    "api": {
+      "bodyParser": {
+        "sizeLimit": "100mb"
+      }
+    }
+}
