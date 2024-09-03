@@ -1,21 +1,32 @@
 import axios from 'axios';
 import { AssessmentData, VideoSlot } from '../types/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
 
 export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot> => {
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('slotId', slotId);
-
-    const response = await axios.post('/api/admin/upload-video', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    const response = await axios.post('/api/admin/upload-video', { 
+      action: 'getUploadUrl',
+      slotId,
+      fileName: file.name,
+      contentType: file.type
     });
 
-    const { video } = response.data;
+    const { uploadUrl, url } = response.data;
+
+    await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type }
+    });
+
+    const confirmResponse = await axios.post('/api/admin/upload-video', {
+      action: 'confirmUpload',
+      slotId,
+      fileName: `video${slotId}_${file.name}`
+    });
+
+    const { video } = confirmResponse.data;
 
     return {
       id: video.id,

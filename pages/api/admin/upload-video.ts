@@ -1,8 +1,7 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { put, list, del } from '@vercel/blob';
-import { getSettings } from '../../../utils/kvUtils';
-import formidable from 'formidable';
-import fs from 'fs';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getSession } from 'next-auth/react';
+import { list, del } from '@vercel/blob';
 
 export const config = {
   api: {
@@ -10,82 +9,62 @@ export const config = {
   },
 };
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method === 'GET') {
-    try {
-      const { blobs } = await list();
-      const videos = blobs
-        .filter(blob => blob.pathname.startsWith('video'))
-        .map(blob => {
-          const [slotId, originalName] = blob.pathname.split('_');
-          return {
-            id: slotId.replace('video', ''),
-            fileName: blob.pathname,
-            originalName,
-            url: blob.url,
-          };
-        });
-      res.status(200).json({ videos });
-    } catch (error) {
-      console.error('Error retrieving videos:', error);
-      res.status(500).json({ message: 'Error retrieving videos', error: (error as Error).message });
-    }
-  } else if (req.method === 'POST') {
-    const settings = await getSettings();
-    const totalVideos = settings.assessment.totalVideos;
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getSession({ req });
 
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error parsing form', error: err.message });
-      }
+  if (!session || !session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
-      const slotId = Array.isArray(fields.slotId) ? fields.slotId[0] : fields.slotId;
-      const file = Array.isArray(files.file) ? files.file[0] : files.file;
+  try {
+    const body = (await new Promise((resolve, reject) => {
+      let data = '';
+      req.on('data', chunk => {
+        data += chunk;
+      });
+      req.on('end', () => {
+        resolve(JSON.parse(data));
+      });
+      req.on('error', reject);
+    })) as HandleUploadBody;
 
-      if (!slotId || !file) {
-        return res.status(400).json({ message: 'Missing slotId or file' });
-      }
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async (pathname: string) => {
+        // Here you can implement additional checks if needed
+        return {
+          allowedContentTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
+          tokenPayload: JSON.stringify({
+            userEmail: session.user?.email,
+          }),
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        console.log('blob upload completed', blob, tokenPayload);
 
-      const slotNumber = parseInt(slotId);
-      if (isNaN(slotNumber) || slotNumber < 1 || slotNumber > totalVideos) {
-        return res.status(400).json({ message: 'Invalid slotId' });
-      }
+        try {
+          // Delete existing video for this slot, if any
+          const { blobs } = await list();
+          const slotId = blob.pathname.split('_')[0].replace('video', '');
+          const existingBlob = blobs.find(b => b.pathname.startsWith(`video${slotId}_`));
+          if (existingBlob && existingBlob.url !== blob.url) {
+            await del(existingBlob.url);
+          }
 
-      try {
-        // Delete existing video for this slot, if any
-        const { blobs } = await list();
-        const existingBlob = blobs.find(blob => blob.pathname.startsWith(`video${slotId}_`));
-        if (existingBlob) {
-          await del(existingBlob.url);
+          // Here you can update your database or perform any other necessary actions
+          // For example:
+          // const { userEmail } = JSON.parse(tokenPayload);
+          // await db.update({ videoUrl: blob.url, userEmail });
+        } catch (error) {
+          console.error('Error in onUploadCompleted:', error);
         }
-
-        // Upload new video
-        const fileName = `video${slotId}_${file.originalFilename}`;
-        const fileBuffer = fs.readFileSync(file.filepath);
-        const { url } = await put(fileName, fileBuffer, {
-          access: 'public',
-          addRandomSuffix: false,
-        });
-
-        res.status(200).json({ 
-          message: 'Video uploaded successfully', 
-          video: { 
-            id: slotId, 
-            fileName, 
-            originalName: file.originalFilename, 
-            url 
-          } 
-        });
-      } catch (error) {
-        console.error('Error uploading video:', error);
-        res.status(500).json({ message: 'Error uploading video', error: (error as Error).message });
-      } finally {
-        // Clean up the temporary file
-        fs.unlinkSync(file.filepath);
-      }
+      },
     });
-  } else {
-    res.status(405).json({ message: 'Method not allowed' });
+
+    return res.status(200).json(jsonResponse);
+  } catch (error) {
+    console.error('Error in upload handler:', error);
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
