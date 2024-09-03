@@ -73,7 +73,8 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
   
         const xhr = new XMLHttpRequest();
         const blob = await new Promise<{ url: string }>((resolve, reject) => {
-          upload(file.name, file, {
+          const fileName = `video${id}_${file.name}`;
+          upload(fileName, file, {
             access: 'public',
             handleUploadUrl: '/api/admin/upload-video',
           }).then(resolve).catch(reject);
@@ -91,6 +92,9 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
         ));
         setUploadProgress(prev => ({ ...prev, [id]: 100 }));
         alert(`Video ${id} uploaded successfully!`);
+        
+        // Refresh the video list after successful upload
+        await fetchUploadedVideos();
       } catch (err) {
         console.error(`Error uploading video ${id}:`, err);
         setVideoSlots(slots => slots.map(slot => 

@@ -1,52 +1,13 @@
 import axios from 'axios';
-import { AssessmentData, VideoSlot } from '../types/types';
+import { AssessmentData,VideoSlot } from '../types/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000/api';
-
-export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot> => {
-  try {
-    const response = await axios.post('/api/admin/upload-video', { 
-      action: 'getUploadUrl',
-      slotId,
-      fileName: file.name,
-      contentType: file.type
-    });
-
-    const { uploadUrl, url } = response.data;
-
-    await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type }
-    });
-
-    const confirmResponse = await axios.post('/api/admin/upload-video', {
-      action: 'confirmUpload',
-      slotId,
-      fileName: `video${slotId}_${file.name}`
-    });
-
-    const { video } = confirmResponse.data;
-
-    return {
-      id: video.id,
-      file: null,
-      url: video.url,
-      originalName: video.originalName,
-      uploading: false,
-      error: null,
-    };
-  } catch (error) {
-    console.error('Error uploading video:', error);
-    throw new Error('Failed to upload video');
-  }
-};
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
   try {
     const response = await axios.get('/api/admin/upload-video');
     
-    if (!response.data ?? !Array.isArray(response.data.videos)) {
+    if (!response.data || !Array.isArray(response.data.videos)) {
       console.error('Unexpected API response structure:', response.data);
       return [];
     }
@@ -61,7 +22,7 @@ export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
     }));
   } catch (error) {
     console.error('Error fetching uploaded videos:', error);
-    return [];
+    throw error;
   }
 };
 
