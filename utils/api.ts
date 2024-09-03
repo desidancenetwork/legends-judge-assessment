@@ -5,29 +5,17 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export const uploadVideo = async (file: File, slotId: string): Promise<VideoSlot> => {
   try {
-    const response = await axios.post('/api/admin/upload-video', { 
-      action: 'getUploadUrl',
-      slotId,
-      fileName: file.name,
-      contentType: file.type
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('slotId', slotId);
+
+    const response = await axios.post('/api/admin/upload-video', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
 
-    const { uploadUrl, pathname } = response.data;
-
-    // Step 2: Upload the file directly to Vercel Blob
-    await fetch(uploadUrl, {
-      method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type }
-    });
-
-    const confirmResponse = await axios.post('/api/admin/upload-video', {
-      action: 'confirmUpload',
-      slotId,
-      fileName: pathname
-    });
-
-    const { video } = confirmResponse.data;
+    const { video } = response.data;
 
     return {
       id: video.id,

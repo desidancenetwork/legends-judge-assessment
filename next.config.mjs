@@ -5,6 +5,11 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb',
+    },
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.resolve.fallback = {
