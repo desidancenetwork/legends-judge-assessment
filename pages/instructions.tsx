@@ -36,7 +36,7 @@ const Instructions = ({ settings }: InstructionsProps) => {
             <li>Take notes in the provided area during each video.</li>
             <li>You will have the length of each video PLUS an additional {settings.assessment.additionalTime / 60} minutes after to complete your notes.</li>
             <li>Once started, videos cannot be paused or replayed. Notes auto-submit when time expires.</li>
-            <li>Notes are for your personal use &dash; they do not have to be perfect/formal! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for the season.</li>
+            <li>Notes are for your personal use — they do not have to be perfect/formal! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for the season.</li>
             <li>Using scratch paper for handwritten notes is permitted; you will have the option to upload a picture of them at the end of the assessment.</li>
             <li>After all videos, you have {settings.assessment.rankingTime / 60} minutes to rank performances and explain your rankings.</li>
             <li>Use complete sentences for the ranking explanations. Responses auto-submit when time expires.</li>
