@@ -8,6 +8,7 @@ const UploadNotes = () => {
   const { userInfo, videoNotes, rankings, hasCompletedRanking, setHasCompletedAssessment } = useAssessment();
   const [files, setFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const buttonText = files.length > 0 ? 'Upload and Finish' : 'Finish'
 
   useEffect(() => {
     if (!userInfo && !hasCompletedRanking) {
@@ -112,7 +113,7 @@ const UploadNotes = () => {
               disabled={isUploading}
               className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              {isUploading ? 'Submitting...' : files.length > 0 ? 'Upload and Finish' : 'Finish'}
+              {isUploading ? 'Submitting...' : buttonText}
             </button>
           </div>
         </div>

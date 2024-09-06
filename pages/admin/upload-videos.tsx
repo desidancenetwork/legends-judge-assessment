@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
@@ -63,7 +63,7 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
   }
 
   const handleFileUpload = (id: string) => async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       const file = e.target.files[0];
       try {
         setVideoSlots(slots => slots.map(slot => 
@@ -114,7 +114,7 @@ const UploadVideos = ({ settings }: UploadVideosProps) => {
       </Link>
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-white text-center mb-8 text-shadow-lg">Upload Assessment Videos</h1>
+          <h1 className="text-3xl font-pontiac text-white text-center mb-8 text-shadow-lg">Upload Assessment Videos</h1>
           <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
             {loading && <p className="text-white mt-4">Loading videos...</p>}
             {error && <p className="text-red-400 mt-4">{error}</p>}

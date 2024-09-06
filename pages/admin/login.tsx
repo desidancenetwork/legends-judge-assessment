@@ -28,7 +28,7 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-md w-full space-y-8 p-8 bg-black bg-opacity-40 backdrop-blur-sm rounded-xl shadow-xl">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-white text-shadow-lg">
+          <h2 className="mt-6 text-center text-3xl font-pontiac text-white text-shadow-lg">
             Admin Login
           </h2>
         </div>

@@ -5,7 +5,6 @@ import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { AdminSettings } from '../../types/types';
 import { getSettings, updateSettings } from '../../utils/kvUtils';
-import axios from 'axios';
 
 interface SettingsProps {
   initialSettings: AdminSettings;
@@ -66,17 +65,17 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     }
 
     const totalVideos = Number(assessment.totalVideos);
-    if (isNaN(totalVideos) ?? totalVideos < 0 ?? totalVideos > 5) {
+    if (isNaN(totalVideos) || totalVideos < 0 || totalVideos > 5) {
       return 'Total videos must be between 0 and 5.';
     }
 
     const additionalTime = Number(assessment.additionalTime);
-    if (isNaN(additionalTime) ?? additionalTime < 0 ?? additionalTime > 10) {
+    if (isNaN(additionalTime) || additionalTime < 0 || additionalTime > 10) {
       return 'Additional time must be between 0 and 10 minutes.';
     }
 
     const rankingTime = Number(assessment.rankingTime);
-    if (isNaN(rankingTime) ?? rankingTime < 0 ?? rankingTime > 30) {
+    if (isNaN(rankingTime) || rankingTime < 0 || rankingTime > 30) {
       return 'Ranking time must be between 0 and 30 minutes.';
     }
 
@@ -136,23 +135,9 @@ const Settings = ({ initialSettings }: SettingsProps) => {
       </Link>
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-white text-center mb-8 text-shadow-lg">Application Settings</h1>
+          <h1 className="text-3xl font-pontiac text-white text-center mb-8 text-shadow-lg">Application Settings</h1>
           <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="appName" className="block text-sm font-medium text-gray-200">
-                  App Name (max 50 characters)
-                </label>
-                <input
-                  type="text"
-                  name="appName"
-                  id="appName"
-                  value={localSettings.appName}
-                  onChange={handleChange}
-                  maxLength={50}
-                  className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
-                />
-              </div>
               <div>
                 <label htmlFor="assessment.additionalTime" className="block text-sm font-medium text-gray-200">
                   Additional Time (0-10 min)

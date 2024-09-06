@@ -25,7 +25,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen">
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="py-6">
-          <h1 className="text-3xl font-bold text-white text-center mb-8 text-shadow-lg">Admin Dashboard</h1>
+          <h1 className="text-3xl font-pontiac text-white text-center mb-8 text-shadow-lg">Admin Dashboard</h1>
           <div className="mt-6 flex flex-col items-center justify-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
             <Link href="/admin/upload-videos" className="w-full sm:w-auto">
               <span className="block bg-white bg-opacity-10 hover:bg-opacity-20 transition-all duration-300 rounded-lg shadow-lg p-6 border border-white border-opacity-20 text-center">

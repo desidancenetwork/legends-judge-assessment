@@ -44,7 +44,6 @@ export type AssessmentData = {
 };
   
 export type AdminSettings = {
-  appName: string;
   assessment: {
     additionalTime: number;
     totalVideos: number;

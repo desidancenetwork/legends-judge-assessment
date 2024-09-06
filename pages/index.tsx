@@ -32,7 +32,7 @@ const Home: NextPage<HomeProps> = ({ settings }) => {
         </div>
         <div>
           <h2 className="font-pontiac mt-6 text-center text-4xl text-white">
-            {settings.appName}
+            DDN Legends<br />Mock Judging Assessment
           </h2>
           <p className="mt-2 text-center text-lg text-gray-300">
             Register to begin
