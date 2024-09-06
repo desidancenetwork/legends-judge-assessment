@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { GetServerSideProps } from 'next';
@@ -12,7 +12,7 @@ interface InstructionsProps {
 
 const Instructions = ({ settings }: InstructionsProps) => {
   const router = useRouter();
-  const { userInfo } = useAssessment();
+  const { userInfo, setHasStartedAssessment } = useAssessment();
 
   useEffect(() => {
     if (!userInfo) {
@@ -20,9 +20,11 @@ const Instructions = ({ settings }: InstructionsProps) => {
     }
   }, [userInfo, router]);
 
-  const handleStart = () => {
+  const handleStart = useCallback(() => {
+    setHasStartedAssessment(true);
+    document.cookie = "hasStartedAssessment=true; path=/";
     router.push('/assessment');
-  };
+  }, [setHasStartedAssessment, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -37,7 +39,7 @@ const Instructions = ({ settings }: InstructionsProps) => {
             video has ended to complete your notes. Your notes will auto-submit once the timer runs out.<br /><br /> Your notes do not have to be written in complete
             sentences/paragraphs! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for
             the season.<br /><br /> You will be REQUIRED to rank all three videos, and provide an explanation for your rankings. You will have 20 minutes to complete
-            your explanation. Your response will auto-submit once the timer runs out. We would like your explanation to be written in sentences/paragraphs.<br /><br />
+            your explanation. Your response will auto-submit once the timer runs out. We would like your explanation to be written in complete sentences/paragraphs.<br /><br />
             Please make sure you have stable internet connection before beginning.<br /><br /> Please complete this mock judging as thoroughly as possible.
             If you have any questions, please reach out to Legends Judging Relations at
             <Link 

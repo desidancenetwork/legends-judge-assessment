@@ -14,7 +14,7 @@ interface AssessmentProps {
 
 const Assessment = ({ settings }: AssessmentProps) => {
   const router = useRouter();
-  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, setHasCompletedAssessment } = useAssessment();
+  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, hasStartedAssessment, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
   const [, setIsVideoPlaying] = useState(false);
@@ -48,7 +48,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
     };
 
     fetchVideos();
-  }, [userInfo, router]);
+  }, [userInfo, hasStartedAssessment, router]);
 
   useEffect(() => {
     // Reset states when moving to a new video
@@ -60,10 +60,12 @@ const Assessment = ({ settings }: AssessmentProps) => {
     currentNoteRef.current = '';
     setProgress(0);
     scrollToTop();
+    setHasStartedAssessment(false);
   }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
     setIsVideoPlaying(true);
+    setHasStartedAssessment(true);
   }, []);
 
   const handleVideoEnd = useCallback(() => {
