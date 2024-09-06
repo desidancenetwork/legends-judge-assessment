@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 interface NotesAreaProps {
   onSubmit: (note: string) => void;
   onChange: (note: string) => void;
-  timeRemaining: number;
 }
 
 const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange }) => {

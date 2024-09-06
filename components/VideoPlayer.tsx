@@ -8,7 +8,6 @@ interface VideoPlayerProps {
   onEnded: () => void;
   onProgress: (progress: number) => void;
   maxHeight?: string;
-  initialProgress?: number;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress, maxHeight = '70vh' }) => {

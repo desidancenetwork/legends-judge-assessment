@@ -14,7 +14,7 @@ interface AssessmentProps {
 
 const Assessment = ({ settings }: AssessmentProps) => {
   const router = useRouter();
-  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, hasStartedAssessment, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
+  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
   const [, setIsVideoPlaying] = useState(false);
@@ -172,7 +172,6 @@ const Assessment = ({ settings }: AssessmentProps) => {
             key={currentVideoIndex}
             onSubmit={handleNoteSubmit} 
             onChange={handleNoteChange}
-            timeRemaining={timeRemaining}
           />
           <div className="flex justify-center mt-6">
             <button

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { Ranking, VideoNote } from '../types/types';
 
 interface AssessmentContextType {
@@ -41,26 +41,42 @@ export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setCurrentVideoIndex(0);
   }, []);
 
+  const value = useMemo(() => ({
+    userInfo,
+    setUserInfo,
+    videoNotes,
+    addVideoNote,
+    rankings,
+    setRankings,
+    currentVideoIndex,
+    setCurrentVideoIndex,
+    hasStartedAssessment,
+    setHasStartedAssessment,
+    hasCompletedAssessment,
+    setHasCompletedAssessment,
+    hasCompletedRanking,
+    setHasCompletedRanking,
+    resetAssessment,
+  }), [
+    userInfo,
+    setUserInfo,
+    videoNotes,
+    addVideoNote,
+    rankings,
+    setRankings,
+    currentVideoIndex,
+    setCurrentVideoIndex,
+    hasStartedAssessment,
+    setHasStartedAssessment,
+    hasCompletedAssessment,
+    setHasCompletedAssessment,
+    hasCompletedRanking,
+    setHasCompletedRanking,
+    resetAssessment,
+  ]);
+  
   return (
-    <AssessmentContext.Provider
-      value={{
-        userInfo,
-        setUserInfo,
-        videoNotes,
-        addVideoNote,
-        rankings,
-        setRankings,
-        currentVideoIndex,
-        setCurrentVideoIndex,
-        hasStartedAssessment,
-        setHasStartedAssessment,
-        hasCompletedAssessment,
-        setHasCompletedAssessment,
-        hasCompletedRanking,
-        setHasCompletedRanking,
-        resetAssessment,
-      }}
-    >
+    <AssessmentContext.Provider value={value}>
       {children}
     </AssessmentContext.Provider>
   );
