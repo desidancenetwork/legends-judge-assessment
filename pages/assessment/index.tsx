@@ -169,8 +169,20 @@ const Assessment = ({ settings }: AssessmentProps) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
   const settings = await getSettings();
+
+  const { req } = context;
+  const hasStartedAssessment = req.cookies.hasStartedAssessment === 'true';
+
+  if (hasStartedAssessment) {
+    return {
+      redirect: {
+        destination: '/assessment',
+        permanent: false,
+      },
+    };
+  }
   return { props: { settings } };
 };
 
