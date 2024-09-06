@@ -48,7 +48,30 @@ const Assessment = ({ settings }: AssessmentProps) => {
     };
 
     fetchVideos();
-  }, [userInfo, hasStartedAssessment, router]);
+
+    if (!document.cookie.includes('hasStartedAssessment=true')) {
+      document.cookie = "hasStartedAssessment=true; path=/";
+      setHasStartedAssessment(true);
+    }
+  }, [userInfo, router, setHasStartedAssessment]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+
+    const handlePopState = () => {
+      router.push('/assessment');
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
 
   useEffect(() => {
     // Reset states when moving to a new video
@@ -60,13 +83,12 @@ const Assessment = ({ settings }: AssessmentProps) => {
     currentNoteRef.current = '';
     setProgress(0);
     scrollToTop();
-    setHasStartedAssessment(false);
   }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
     setIsVideoPlaying(true);
     setHasStartedAssessment(true);
-  }, []);
+  }, [setHasStartedAssessment]);
 
   const handleVideoEnd = useCallback(() => {
     setIsVideoEnded(true);
@@ -173,9 +195,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const settings = await getSettings();
 
   const { req } = context;
-  const hasStartedAssessment = req.cookies.hasStartedAssessment === 'false';
+  const hasStartedAssessment = req.cookies.hasStartedAssessment === 'true';
 
-  if (hasStartedAssessment) {
+  if (!hasStartedAssessment) {
     return {
       redirect: {
         destination: '/instructions',
