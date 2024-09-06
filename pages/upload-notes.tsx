@@ -10,7 +10,7 @@ const UploadNotes = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    if (!userInfo ?? !hasCompletedRanking) {
+    if (!userInfo && !hasCompletedRanking) {
       router.push('/assessment/ranking');
     }
   }, [userInfo, hasCompletedRanking, router]);
@@ -79,9 +79,7 @@ const UploadNotes = () => {
         const errorData = await response.json();
         throw new Error(errorData.message ?? 'Failed to submit assessment');
       }
-  
-      const responseData = await response.json();
-  
+      
       setHasCompletedAssessment(false);
       document.cookie = "hasCompletedAssessment=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "hasCompletedRanking=false; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -98,7 +96,7 @@ const UploadNotes = () => {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-2xl space-y-8">
-        <h1 className="text-4xl font-bold mb-4 text-white text-center text-shadow-lg">Upload Handwritten Notes</h1>
+        <h1 className="text-4xl font-pontiac mb-4 text-white text-center text-shadow-lg">Upload Handwritten Notes</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
           <p className="text-white mb-4">Uploading handwritten notes is optional. If you have any, you may upload them here.</p>
           <input 

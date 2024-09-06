@@ -28,21 +28,18 @@ const Instructions = ({ settings }: InstructionsProps) => {
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4 text-white text-shadow-lg">Instructions</h1>
+          <h1 className="font-pontiac text-4xl mb-4 text-white text-shadow-lg">Instructions</h1>
         </div>
         <div className="bg-black bg-opacity-30 backdrop-blur-sm rounded-lg p-6 shadow-xl">
-          <ul className="list-disc pl-5 space-y-2 mb-6 text-gray-200">
-            <li>You will be required to watch a pre-selected compilation of {settings.assessment.totalVideos} back row performances.</li>
-            <li>Take notes in the provided area during each video.</li>
-            <li>You will have the length of each video PLUS an additional {settings.assessment.additionalTime / 60} minutes after to complete your notes.</li>
-            <li>Once started, videos cannot be paused or replayed. Notes auto-submit when time expires.</li>
-            <li>Notes are for your personal use — they do not have to be perfect/formal! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for the season.</li>
-            <li>Using scratch paper for handwritten notes is permitted; you will have the option to upload a picture of them at the end of the assessment.</li>
-            <li>After all videos, you have {settings.assessment.rankingTime / 60} minutes to rank performances and explain your rankings.</li>
-            <li>Use complete sentences for the ranking explanations. Responses auto-submit when time expires.</li>
-            <li>Ensure you have a stable internet connection before beginning.</li>
-          </ul>
-          <p>Complete this mock assessment as thoroughly as possible. If you have any questions or run into any issues, please reach out to Legends Judging Relations at
+          <p>
+            You will be required to watch a pre-selected compilation of THREE back row performances.<br /><br /> As each video is playing, you will be REQUIRED
+            to take notes directly into an open-ended response section. You will have the length of the video plus an additional 5 minutes after the
+            video has ended to complete your notes. Your notes will auto-submit once the timer runs out.<br /><br /> Your notes do not have to be written in complete
+            sentences/paragraphs! This is just for you to get a feel for judging in real-time, and for us to better prepare our training curriculum for
+            the season.<br /><br /> You will be REQUIRED to rank all three videos, and provide an explanation for your rankings. You will have 20 minutes to complete
+            your explanation. Your response will auto-submit once the timer runs out. We would like your explanation to be written in sentences/paragraphs.<br /><br />
+            Please make sure you have stable internet connection before beginning.<br /><br /> Please complete this mock judging as thoroughly as possible.
+            If you have any questions, please reach out to Legends Judging Relations at
             <Link 
               href="mailto:legendsjudging@desidancenetwork.com"
               className="text-indigo-400 pl-1 hover:text-indigo-300 underline"
