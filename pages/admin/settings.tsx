@@ -58,7 +58,7 @@ const Settings = ({ initialSettings }: SettingsProps) => {
   };
 
   const validateSettings = (settings: AdminSettings): string | null => {
-    const { assessment, appName } = settings;
+    const { assessment } = settings;
 
     if (appName.length > 50) {
       return 'App name must not exceed 50 characters.';
