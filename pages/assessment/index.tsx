@@ -175,7 +175,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { req } = context;
   const hasStartedAssessment = req.cookies.hasStartedAssessment === 'true';
 
-  if (hasStartedAssessment) {
+  if (!hasStartedAssessment) {
     return {
       redirect: {
         destination: '/assessment',
