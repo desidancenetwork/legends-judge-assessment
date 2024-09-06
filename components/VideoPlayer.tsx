@@ -8,9 +8,17 @@ interface VideoPlayerProps {
   onEnded: () => void;
   onProgress: (progress: number) => void;
   maxHeight?: string;
+  initialProgress?: number;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress, maxHeight = '70vh' }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
+  url, 
+  onPlay, 
+  onEnded, 
+  onProgress, 
+  maxHeight = '70vh',
+  initialProgress = 0
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
@@ -28,6 +36,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgr
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (initialProgress > 0 && playerRef.current) {
+      playerRef.current.seekTo(initialProgress, 'fraction');
+    }
+  }, [initialProgress]);
 
   const handleProgress = (state: { played: number }) => {
     onProgress(state.played);
@@ -65,7 +79,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgr
   };
 
   return (
-    <div ref={containerRef} className="relative group">
+    <div ref={containerRef} className="relative group" style={{ maxHeight }}>
       <ReactPlayer
         ref={playerRef}
         url={url}

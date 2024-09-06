@@ -4,14 +4,19 @@ interface NotesAreaProps {
   onSubmit: (note: string) => void;
   onChange: (note: string) => void;
   timeRemaining: number;
+  initialNote?: string;
 }
 
-const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange }) => {
-  const [note, setNote] = useState('');
+const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange, initialNote = '' }) => {
+  const [note, setNote] = useState(initialNote);
 
   useEffect(() => {
     onChange(note);
   }, [note, onChange]);
+
+  useEffect(() => {
+    setNote(initialNote);
+  }, [initialNote]);
 
   return (
     <div className="mt-4">
