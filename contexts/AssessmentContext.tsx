@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { Ranking, VideoNote } from '../types/types';
-import usePersistedState from '../hooks/usePersistedState';
 
 interface AssessmentContextType {
   userInfo: { name: string; email: string } | null;
@@ -23,27 +22,24 @@ interface AssessmentContextType {
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
 
 export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userInfo, setUserInfo] = usePersistedState<{ name: string; email: string } | null>('userInfo', null);
-  const [videoNotes, setVideoNotes] = usePersistedState<VideoNote[]>('videoNotes', []);
-  const [rankings, setRankings] = usePersistedState<Ranking[]>('rankings', []);
-  const [currentVideoIndex, setCurrentVideoIndex] = usePersistedState<number>('currentVideoIndex', 0);
-  const [hasStartedAssessment, setHasStartedAssessment] = usePersistedState<boolean>('hasStartedAssessment', false);
-  const [hasCompletedAssessment, setHasCompletedAssessment] = usePersistedState<boolean>('hasCompletedAssessment', false);
-  const [hasCompletedRanking, setHasCompletedRanking] = usePersistedState<boolean>('hasCompletedRanking', false);
+  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
+  const [videoNotes, setVideoNotes] = useState<VideoNote[]>([]);
+  const [rankings, setRankings] = useState<Ranking[]>([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [hasStartedAssessment, setHasStartedAssessment] = useState(false);
+  const [hasCompletedAssessment, setHasCompletedAssessment] = useState(false);
+  const [hasCompletedRanking, setHasCompletedRanking] = useState(false);
 
   const addVideoNote = useCallback((note: VideoNote) => {
-    setVideoNotes([...videoNotes, note]);
-  }, [setVideoNotes, videoNotes]);
+    setVideoNotes(prevNotes => [...prevNotes, note]);
+  }, []);
 
   const resetAssessment = useCallback(() => {
     setUserInfo(null);
     setVideoNotes([]);
     setRankings([]);
     setCurrentVideoIndex(0);
-    setHasStartedAssessment(false);
-    setHasCompletedAssessment(false);
-    setHasCompletedRanking(false);
-  }, [setUserInfo, setVideoNotes, setRankings, setCurrentVideoIndex, setHasStartedAssessment, setHasCompletedAssessment, setHasCompletedRanking]);
+  }, []);
 
   return (
     <AssessmentContext.Provider

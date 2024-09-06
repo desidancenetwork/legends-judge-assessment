@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import { useAssessment } from '../../contexts/AssessmentContext';
@@ -7,7 +7,6 @@ import Timer from '../../components/Timer';
 import NotesArea from '../../components/NotesArea';
 import { AdminSettings } from '../../types/types';
 import { getSettings } from '../../utils/kvUtils';
-import usePersistedState from '../../hooks/usePersistedState';
 
 interface AssessmentProps {
   settings: AdminSettings;
@@ -15,16 +14,15 @@ interface AssessmentProps {
 
 const Assessment = ({ settings }: AssessmentProps) => {
   const router = useRouter();
-  const { userInfo, addVideoNote, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
-  const [currentVideoIndex, setCurrentVideoIndex] = usePersistedState<number>('currentVideoIndex', 0);
-  const [timeRemaining, setTimeRemaining] = usePersistedState<number>('timeRemaining', settings.assessment.additionalTime);
-  const [videos, setVideos] = usePersistedState<string[]>('videos', []);
-  const [, setIsVideoPlaying] = usePersistedState<boolean>('isVideoPlaying', false);
-  const [, setIsVideoEnded] = usePersistedState<boolean>('isVideoEnded', false);
-  const [showTimer, setShowTimer] = usePersistedState<boolean>('showTimer', false);
-  const [pendingNote, setPendingNote] = usePersistedState<string | null>('pendingNote', null);
-  const [progress, setProgress] = usePersistedState<number>('progress', 0);
+  const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, hasStartedAssessment, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
+  const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
+  const [videos, setVideos] = useState<string[]>([]);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
+  const [pendingNote, setPendingNote] = useState<string | null>(null);
   const currentNoteRef = useRef<string>('');
+  const [progress, setProgress] = useState(0);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -36,32 +34,51 @@ const Assessment = ({ settings }: AssessmentProps) => {
     }
 
     const fetchVideos = async () => {
-      if (videos.length === 0) {
-        try {
-          const response = await fetch('/api/admin/upload-video');
-          const data = await response.json();
-          if (Array.isArray(data.videos)) {
-            setVideos(data.videos.map((video: any) => video.url));
-          } else {
-            console.error('Unexpected response structure:', data);
-          }
-        } catch (error) {
-          console.error('Error fetching videos:', error);
+      try {
+        const response = await fetch('/api/admin/upload-video');
+        const data = await response.json();
+        if (Array.isArray(data.videos)) {
+          setVideos(data.videos.map((video: any) => video.url));
+        } else {
+          console.error('Unexpected response structure:', data);
         }
+      } catch (error) {
+        console.error('Error fetching videos:', error);
       }
     };
 
     fetchVideos();
 
+    // Load persisted data from localStorage
+    const loadPersistedData = () => {
+      const persistedData = localStorage.getItem('assessmentData');
+      if (persistedData) {
+        const { currentVideoIndex: persistedIndex, progress: persistedProgress, timeRemaining: persistedTime, showTimer: persistedShowTimer } = JSON.parse(persistedData);
+        setCurrentVideoIndex(persistedIndex);
+        setProgress(persistedProgress);
+        setTimeRemaining(persistedTime);
+        setShowTimer(persistedShowTimer);
+      }
+    };
+
+    loadPersistedData();
+
     if (!document.cookie.includes('hasStartedAssessment=true')) {
       document.cookie = "hasStartedAssessment=true; path=/";
       setHasStartedAssessment(true);
     }
-  }, [userInfo, router, setHasStartedAssessment, videos, setVideos]);
+  }, [userInfo, router, setHasStartedAssessment, setCurrentVideoIndex]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
+      // Persist data to localStorage before unload
+      localStorage.setItem('assessmentData', JSON.stringify({
+        currentVideoIndex,
+        progress,
+        timeRemaining,
+        showTimer,
+      }));
     };
 
     const handlePopState = () => {
@@ -75,22 +92,36 @@ const Assessment = ({ settings }: AssessmentProps) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [router]);
+  }, [router, currentVideoIndex, progress, timeRemaining, showTimer]);
+
+  useEffect(() => {
+    // Reset states when moving to a new video
+    if (!localStorage.getItem('assessmentData')) {
+      setIsVideoPlaying(false);
+      setIsVideoEnded(false);
+      setShowTimer(false);
+      setTimeRemaining(settings.assessment.additionalTime);
+      setPendingNote(null);
+      currentNoteRef.current = '';
+      setProgress(0);
+      scrollToTop();
+    }
+  }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
     setIsVideoPlaying(true);
     setHasStartedAssessment(true);
-  }, [setIsVideoPlaying, setHasStartedAssessment]);
+  }, [setHasStartedAssessment]);
 
   const handleVideoEnd = useCallback(() => {
     setIsVideoEnded(true);
     setIsVideoPlaying(false);
     setShowTimer(true);
-  }, [setIsVideoEnded, setIsVideoPlaying, setShowTimer]);
+  }, []);
 
   const handleNoteSubmit = useCallback((note: string) => {
     setPendingNote(note);
-  }, [setPendingNote]);
+  }, []);
 
   const handleNoteChange = useCallback((note: string) => {
     currentNoteRef.current = note;
@@ -99,6 +130,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const completeAssessment = useCallback(() => {
     setHasCompletedAssessment(true);
     document.cookie = "hasCompletedAssessment=true; path=/";
+    localStorage.removeItem('assessmentData'); // Clear persisted data
     router.push('/assessment/ranking');
   }, [setHasCompletedAssessment, router]);
 
@@ -107,19 +139,13 @@ const Assessment = ({ settings }: AssessmentProps) => {
       addVideoNote({ videoId: currentVideoIndex, note: pendingNote });
       if (currentVideoIndex < videos.length - 1) {
         setCurrentVideoIndex(currentVideoIndex + 1);
-        setIsVideoPlaying(false);
-        setIsVideoEnded(false);
-        setShowTimer(false);
-        setTimeRemaining(settings.assessment.additionalTime);
-        setPendingNote(null);
-        currentNoteRef.current = '';
-        setProgress(0);
-        scrollToTop();
       } else {
         completeAssessment();
       }
+      setPendingNote(null);
+      scrollToTop();
     }
-  }, [pendingNote, addVideoNote, currentVideoIndex, videos.length, setCurrentVideoIndex, completeAssessment, setIsVideoPlaying, setIsVideoEnded, setShowTimer, setTimeRemaining, setPendingNote, setProgress, settings.assessment.additionalTime]);
+  }, [pendingNote, addVideoNote, currentVideoIndex, videos.length, setCurrentVideoIndex, completeAssessment]);
 
   const handleTimeUp = useCallback(() => {
     handleNoteSubmit(currentNoteRef.current);
@@ -127,7 +153,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
 
   const handleVideoProgress = useCallback((progress: number) => {
     setProgress(progress);
-  }, [setProgress]);
+  }, []);
 
   if (videos.length === 0) {
     return <div className="text-white text-center">Loading videos...</div>;
@@ -161,7 +187,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
             <div className="flex justify-center mb-6">
               <Timer 
                 timeRemaining={timeRemaining} 
-                setTimeRemaining={(value) => setTimeRemaining(typeof value === 'function' ? value(timeRemaining) : value)}
+                setTimeRemaining={setTimeRemaining} 
                 onTimeUp={handleTimeUp}
                 totalTime={settings.assessment.additionalTime}
               />
@@ -172,7 +198,6 @@ const Assessment = ({ settings }: AssessmentProps) => {
             onSubmit={handleNoteSubmit} 
             onChange={handleNoteChange}
             timeRemaining={timeRemaining}
-            initialNote={pendingNote || ''}
           />
           <div className="flex justify-center mt-6">
             <button
