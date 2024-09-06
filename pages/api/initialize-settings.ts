@@ -4,7 +4,6 @@ import { updateSettings } from '../../utils/kvUtils';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'POST') {
     const initialSettings = {
-        appName: "DDN Legends Mock Judging Assessment",
         apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://ddn-legends-judge-assessment.vercel.app/api",
         assessment: {
           additionalTime: 300,

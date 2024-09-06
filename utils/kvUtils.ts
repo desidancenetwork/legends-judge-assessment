@@ -14,7 +14,6 @@ export async function updateSettings(newSettings: AdminSettings): Promise<void> 
 
 function getDefaultSettings(): AdminSettings {
   return {
-    appName: "DDN Legends Mock Judging Assessment",
     assessment: {
       additionalTime: 300,
       totalVideos: 3,

@@ -60,10 +60,6 @@ const Settings = ({ initialSettings }: SettingsProps) => {
   const validateSettings = (settings: AdminSettings): string | null => {
     const { assessment } = settings;
 
-    if (appName.length > 50) {
-      return 'App name must not exceed 50 characters.';
-    }
-
     const totalVideos = Number(assessment.totalVideos);
     if (isNaN(totalVideos) || totalVideos < 0 || totalVideos > 5) {
       return 'Total videos must be between 0 and 5.';
