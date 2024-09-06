@@ -11,19 +11,11 @@ interface VideoPlayerProps {
   initialProgress?: number;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
-  url, 
-  onPlay, 
-  onEnded, 
-  onProgress, 
-  maxHeight = '70vh',
-  initialProgress = 0
-}) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress, maxHeight = '70vh' }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentProgress, setCurrentProgress] = useState(initialProgress);
   const playerRef = useRef<ReactPlayer>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,16 +30,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (playerRef.current && initialProgress > 0) {
-      playerRef.current.seekTo(initialProgress, 'fraction');
-      setCurrentProgress(initialProgress);
-      setHasStarted(true);
-    }
-  }, [initialProgress]);
-
   const handleProgress = (state: { played: number }) => {
-    setCurrentProgress(state.played);
     onProgress(state.played);
   };
 
@@ -83,7 +66,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   };
 
   return (
-    <div ref={containerRef} className="relative group" style={{ maxHeight }}>
+    <div ref={containerRef} className="relative group">
       <ReactPlayer
         ref={playerRef}
         url={url}
@@ -128,12 +111,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           <p className="text-white text-2xl">Video Ended</p>
         </div>
       )}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
-        <div 
-          className="h-full bg-blue-600" 
-          style={{ width: `${currentProgress * 100}%` }}
-        ></div>
-      </div>
     </div>
   );
 };

@@ -17,8 +17,8 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const { userInfo, addVideoNote, currentVideoIndex, setCurrentVideoIndex, hasStartedAssessment, setHasStartedAssessment, setHasCompletedAssessment } = useAssessment();
   const [timeRemaining, setTimeRemaining] = useState(settings.assessment.additionalTime);
   const [videos, setVideos] = useState<string[]>([]);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [isVideoEnded, setIsVideoEnded] = useState(false);
+  const [, setIsVideoPlaying] = useState(false);
+  const [, setIsVideoEnded] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
   const [pendingNote, setPendingNote] = useState<string | null>(null);
   const currentNoteRef = useRef<string>('');
@@ -49,36 +49,15 @@ const Assessment = ({ settings }: AssessmentProps) => {
 
     fetchVideos();
 
-    // Load persisted data from localStorage
-    const loadPersistedData = () => {
-      const persistedData = localStorage.getItem('assessmentData');
-      if (persistedData) {
-        const { currentVideoIndex: persistedIndex, progress: persistedProgress, timeRemaining: persistedTime, showTimer: persistedShowTimer } = JSON.parse(persistedData);
-        setCurrentVideoIndex(persistedIndex);
-        setProgress(persistedProgress);
-        setTimeRemaining(persistedTime);
-        setShowTimer(persistedShowTimer);
-      }
-    };
-
-    loadPersistedData();
-
     if (!document.cookie.includes('hasStartedAssessment=true')) {
       document.cookie = "hasStartedAssessment=true; path=/";
       setHasStartedAssessment(true);
     }
-  }, [userInfo, router, setHasStartedAssessment, setCurrentVideoIndex]);
+  }, [userInfo, router, setHasStartedAssessment]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      // Persist data to localStorage before unload
-      localStorage.setItem('assessmentData', JSON.stringify({
-        currentVideoIndex,
-        progress,
-        timeRemaining,
-        showTimer,
-      }));
     };
 
     const handlePopState = () => {
@@ -92,20 +71,18 @@ const Assessment = ({ settings }: AssessmentProps) => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [router, currentVideoIndex, progress, timeRemaining, showTimer]);
+  }, [router]);
 
   useEffect(() => {
     // Reset states when moving to a new video
-    if (!localStorage.getItem('assessmentData')) {
-      setIsVideoPlaying(false);
-      setIsVideoEnded(false);
-      setShowTimer(false);
-      setTimeRemaining(settings.assessment.additionalTime);
-      setPendingNote(null);
-      currentNoteRef.current = '';
-      setProgress(0);
-      scrollToTop();
-    }
+    setIsVideoPlaying(false);
+    setIsVideoEnded(false);
+    setShowTimer(false);
+    setTimeRemaining(settings.assessment.additionalTime);
+    setPendingNote(null);
+    currentNoteRef.current = '';
+    setProgress(0);
+    scrollToTop();
   }, [currentVideoIndex, settings.assessment.additionalTime]);
 
   const handleVideoPlay = useCallback(() => {
@@ -130,7 +107,6 @@ const Assessment = ({ settings }: AssessmentProps) => {
   const completeAssessment = useCallback(() => {
     setHasCompletedAssessment(true);
     document.cookie = "hasCompletedAssessment=true; path=/";
-    localStorage.removeItem('assessmentData'); // Clear persisted data
     router.push('/assessment/ranking');
   }, [setHasCompletedAssessment, router]);
 
@@ -176,7 +152,6 @@ const Assessment = ({ settings }: AssessmentProps) => {
                 onEnded={handleVideoEnd}
                 onProgress={handleVideoProgress}
                 maxHeight="20vh"
-                initialProgress={progress}
               />
               <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
                 <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progress * 100}%` }}></div>
