@@ -34,20 +34,19 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgr
   };
 
   const handlePlay = () => {
-    if (!hasStarted) {
+    if (!hasStarted && !hasEnded) {
       setIsPlaying(true);
       setHasStarted(true);
       onPlay();
-    } else {
+    } else if (!hasEnded) {
       setIsPlaying(true);
     }
-    // Force play to prevent auto-pause
-    playerRef.current?.getInternalPlayer()?.play();
   };
 
   const handlePause = () => {
-    // Prevent pausing
-    handlePlay();
+    if (!hasEnded) {
+      handlePlay();
+    }
   };
 
   const handleEnded = () => {
@@ -65,13 +64,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgr
   };
 
   return (
-    <div ref={containerRef} className="relative group">
+    <div ref={containerRef} className="relative group" style={{ maxHeight }}>
       <ReactPlayer
         ref={playerRef}
         url={url}
         width="100%"
         height="100%"
-        playing={isPlaying}
+        playing={isPlaying && !hasEnded}
         controls={false}
         onPlay={handlePlay}
         onProgress={handleProgress}
