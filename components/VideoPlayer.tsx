@@ -7,10 +7,9 @@ interface VideoPlayerProps {
   onPlay: () => void;
   onEnded: () => void;
   onProgress: (progress: number) => void;
-  maxHeight?: string;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress, maxHeight = '70vh' }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgress }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [hasEnded, setHasEnded] = useState(false);
@@ -64,7 +63,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ url, onPlay, onEnded, onProgr
   };
 
   return (
-    <div ref={containerRef} className="relative group" style={{ maxHeight }}>
+    <div ref={containerRef} className="relative group">
       <ReactPlayer
         ref={playerRef}
         url={url}
