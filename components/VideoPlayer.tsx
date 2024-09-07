@@ -15,9 +15,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
     hasStarted: false,
     hasEnded: false,
     isFullscreen: false,
+    progress: 0,
   });
   const playerRef = useRef<ReactPlayer>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -31,6 +33,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
   }, []);
 
   const handleProgress = useCallback((state: { played: number }) => {
+    setPlayerState(prev => ({ ...prev, progress: state.played }));
     onProgress(state.played);
   }, [onProgress]);
 
@@ -62,6 +65,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
     }
   }, []);
 
+  useEffect(() => {
+    if (progressRef.current) {
+      progressRef.current.style.width = `${playerState.progress * 100}%`;
+    }
+  }, [playerState.progress]);
+
   return (
     <div ref={containerRef} className="relative group">
       <ReactPlayer
@@ -87,6 +96,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
           },
         }}
       />
+      <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
+        <div 
+          ref={progressRef}
+          className="h-full bg-blue-600 transition-all duration-300 ease-out"
+          style={{ width: '0%' }}
+        />
+      </div>
       {!playerState.isPlaying && !playerState.hasEnded && (
         <button
           onClick={handlePlay}
@@ -95,7 +111,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
           <Play size={64} className="text-white" />
         </button>
       )}
-      <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute bottom-2 right-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <button
           onClick={handleFullscreenToggle}
           className="bg-white bg-opacity-25 text-white p-2 rounded-full hover:bg-opacity-50 transition-colors duration-300"
