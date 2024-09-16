@@ -60,13 +60,3 @@ export const uploadFileToDrive = async (fileContent: Buffer, fileName: string, m
     throw err;
   }
 };
-
-export const getFileFromDrive = async (fileId: string) => {
-  try {
-    const res = await drive.files.get({ fileId: fileId, alt: 'media' }, { responseType: 'stream' });
-    return res.data;
-  } catch (err) {
-    console.error('Error getting file from Google Drive:', err);
-    throw err;
-  }
-};
