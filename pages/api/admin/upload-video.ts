@@ -2,7 +2,6 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { list, del } from '@vercel/blob';
-import { useAssessment } from '@/contexts/AssessmentContext';
 
 export const config = {
   api: {
@@ -12,11 +11,6 @@ export const config = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getSession({ req });
-  const { userInfo } = useAssessment();
-
-  if ((!userInfo && (!session || !session.user)) || (!session || !session.user)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   if (req.method === 'GET') {
     try {
