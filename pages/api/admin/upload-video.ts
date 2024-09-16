@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { list, del } from '@vercel/blob';
+import { useAssessment } from '@/contexts/AssessmentContext';
 
 export const config = {
   api: {
@@ -11,8 +12,9 @@ export const config = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getSession({ req });
+  const { userInfo } = useAssessment();
 
-  if (!session || !session.user) {
+  if ((!userInfo && (!session || !session.user)) || (!session || !session.user)) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
@@ -55,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return {
             allowedContentTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo'],
             tokenPayload: JSON.stringify({
-              userEmail: session.user?.email,
+              userEmail: session?.user?.email,
             }),
           };
         },

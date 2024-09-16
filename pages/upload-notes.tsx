@@ -99,9 +99,9 @@ const UploadNotes = () => {
       <div className="w-full max-w-2xl space-y-8">
         <h1 className="text-4xl font-pontiac mb-4 text-white text-center text-shadow-lg">Upload Handwritten Notes</h1>
         <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
-          <p className="text-white mb-4">Uploading handwritten notes is optional. If you have any, you may upload them here.</p>
+          <p className="text-white mb-4">Uploading handwritten notes is optional. If you have any, you may upload them here (size limit 5MB).</p>
           <input 
-            type="file" 
+            type="file"
             onChange={handleFileChange} 
             accept="image/*,application/pdf" 
             multiple
