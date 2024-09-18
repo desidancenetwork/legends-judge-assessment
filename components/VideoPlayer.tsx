@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import ReactPlayer from 'react-player/youtube';
+import ReactPlayer from 'react-player';
 import { Play, Maximize, Minimize } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -75,19 +75,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
         onProgress={handleProgress}
         onPause={handlePause}
         onEnded={handleEnded}
-        youtube={{
-          playerVars: {
-            controls: 0,
-            disablekb: 1,
-            fs: 0,
-            rel: 0,
-            modestbranding: 1,
-            iv_load_policy: 3,
-            playsinline: 1,
-          },
-          embedOptions: {
-            preventFullScreen: true,
-          },
+        config={{
+          youtube: {
+            playerVars: {
+              controls: 0,
+              disablekb: 1,
+              fs: 0,
+              rel: 0,
+              modestbranding: 1,
+              iv_load_policy: 3,
+              playsinline: 1,
+            },
+            embedOptions: {
+              preventFullScreen: true,
+            },
+          }
         }}
       />
       {!playerState.isPlaying && !playerState.hasEnded && (
