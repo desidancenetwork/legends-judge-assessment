@@ -19,6 +19,7 @@ const Settings = ({ initialSettings }: SettingsProps) => {
       ...initialSettings.assessment,
       additionalTime: initialSettings.assessment.additionalTime / 60,
       rankingTime: initialSettings.assessment.rankingTime / 60,
+      youtubeVideoIds: initialSettings.assessment.youtubeVideoIds || ['', '', ''],
     }
   });
   const [saving, setSaving] = useState(false);
@@ -44,6 +45,18 @@ const Settings = ({ initialSettings }: SettingsProps) => {
 
     setLocalSettings((prev) => {
       if (section === 'assessment') {
+        if (key.startsWith('youtubeVideoId')) {
+          const index = parseInt(key.slice(-1)) - 1;
+          const newYoutubeVideoIds = [...prev.assessment.youtubeVideoIds];
+          newYoutubeVideoIds[index] = value;
+          return {
+            ...prev,
+            assessment: {
+              ...prev.assessment,
+              youtubeVideoIds: newYoutubeVideoIds,
+            },
+          };
+        }
         return {
           ...prev,
           assessment: {
@@ -73,6 +86,11 @@ const Settings = ({ initialSettings }: SettingsProps) => {
     const rankingTime = Number(assessment.rankingTime);
     if (isNaN(rankingTime) || rankingTime < 0 || rankingTime > 30) {
       return 'Ranking time must be between 0 and 30 minutes.';
+    }
+
+    const youtubeVideoIds = assessment.youtubeVideoIds;
+    if (youtubeVideoIds.some(id => id.length > 0 && id.length !== 11)) {
+      return 'YouTube Video IDs must be 11 characters long.';
     }
 
     return null;
@@ -181,6 +199,22 @@ const Settings = ({ initialSettings }: SettingsProps) => {
                   className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
                 />
               </div>
+              {[1, 2, 3].map((num) => (
+                <div key={`youtubeVideoId${num}`}>
+                  <label htmlFor={`assessment.youtubeVideoId${num}`} className="block text-sm font-medium text-gray-200">
+                    YouTube Video ID {num}
+                  </label>
+                  <input
+                    type="text"
+                    name={`assessment.youtubeVideoId${num}`}
+                    id={`assessment.youtubeVideoId${num}`}
+                    value={localSettings.assessment.youtubeVideoIds[num - 1]}
+                    onChange={handleChange}
+                    maxLength={11}
+                    className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
+                  />
+                </div>
+              ))}
               <div>
                 <label htmlFor="googleDrive.folderId" className="block text-sm font-medium text-gray-200">
                   Google Drive Folder ID

@@ -33,21 +33,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
       router.push('/');
     }
 
-    const fetchVideos = async () => {
-      try {
-        const response = await fetch('/api/admin/upload-video');
-        const data = await response.json();
-        if (Array.isArray(data.videos)) {
-          setVideos(data.videos.map((video: any) => video.url));
-        } else {
-          console.error('Unexpected response structure:', data);
-        }
-      } catch (error) {
-        console.error('Error fetching videos:', error);
-      }
-    };
-
-    fetchVideos();
+    setVideos(settings.assessment.youtubeVideoIds.filter(id => id !== ''));
 
     if (!document.cookie.includes('hasStartedAssessment=true')) {
       document.cookie = "hasStartedAssessment=true; path=/";
@@ -147,7 +133,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
             <div className="mb-6">
               <VideoPlayer 
                 key={currentVideoIndex}
-                url={videos[currentVideoIndex]}
+                youtubeVideoId={videos[currentVideoIndex]}
                 onPlay={handleVideoPlay}
                 onEnded={handleVideoEnd}
                 onProgress={handleVideoProgress}
@@ -203,6 +189,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       },
     };
   }
+  settings.assessment.youtubeVideoIds = settings.assessment.youtubeVideoIds.filter(id => id !== '');
+  
   return { props: { settings } };
 };
 

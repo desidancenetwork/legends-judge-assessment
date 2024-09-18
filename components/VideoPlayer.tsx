@@ -1,15 +1,15 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import ReactPlayer from 'react-player';
+import ReactPlayer from 'react-player/youtube';
 import { Play, Maximize, Minimize } from 'lucide-react';
 
 interface VideoPlayerProps {
-  url: string;
+  youtubeVideoId: string;
   onPlay: () => void;
   onEnded: () => void;
   onProgress: (progress: number) => void;
 }
 
-const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnded, onProgress }) => {
+const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, onPlay, onEnded, onProgress }) => {
   const [playerState, setPlayerState] = useState({
     isPlaying: false,
     hasStarted: false,
@@ -66,7 +66,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
     <div ref={containerRef} className="relative group">
       <ReactPlayer
         ref={playerRef}
-        url={url}
+        url={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
         width="100%"
         height="100%"
         playing={playerState.isPlaying && !playerState.hasEnded}
@@ -77,13 +77,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ url, onPlay, onEnd
         onEnded={handleEnded}
         playsinline
         config={{
-          file: {
-            attributes: {
-              controlsList: 'nodownload nofullscreen noremoteplayback',
-              disablePictureInPicture: true,
-              playsInline: true,
-            },
-            forceVideo: true,
+          playerVars: {
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            rel: 0,
+            playsinline: 1,
           },
         }}
       />

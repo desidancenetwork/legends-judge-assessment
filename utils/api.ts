@@ -3,29 +3,6 @@ import { AssessmentData,VideoSlot } from '../types/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export const getUploadedVideos = async (): Promise<VideoSlot[]> => {
-  try {
-    const response = await axios.get('/api/admin/upload-video');
-    
-    if (!response.data || !Array.isArray(response.data.videos)) {
-      console.error('Unexpected API response structure:', response.data);
-      return [];
-    }
-    
-    return response.data.videos.map((video: any) => ({
-      id: video.id,
-      file: null,
-      url: video.url,
-      originalName: video.originalName,
-      uploading: false,
-      error: null,
-    }));
-  } catch (error) {
-    console.error('Error fetching uploaded videos:', error);
-    throw error;
-  }
-};
-
 export const submitAssessment = async (assessmentData: AssessmentData, handwrittenNotes: File[]): Promise<{ folderId: string, pdfFileId: string, uploadedNoteIds: string[] }> => {
   try {
     const formData = new FormData();

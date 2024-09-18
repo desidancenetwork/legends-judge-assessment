@@ -48,6 +48,7 @@ export type AdminSettings = {
     additionalTime: number;
     totalVideos: number;
     rankingTime: number;
+    youtubeVideoIds: string[];
   };
   googleDrive: {
     folderId: string;

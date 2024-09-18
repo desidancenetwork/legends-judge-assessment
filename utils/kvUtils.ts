@@ -17,7 +17,8 @@ function getDefaultSettings(): AdminSettings {
     assessment: {
       additionalTime: 300,
       totalVideos: 3,
-      rankingTime: 1200
+      rankingTime: 1200,
+      youtubeVideoIds: []
     },
     googleDrive: {
       folderId: process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID ?? "root"
