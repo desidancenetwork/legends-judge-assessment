@@ -111,11 +111,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
           <p className="text-white text-2xl">Video Ended</p>
         </div>
       )}
-      <div 
-        className="absolute inset-0 z-10"
-        onClick={(e) => e.preventDefault()}
-        onContextMenu={(e) => e.preventDefault()}
-      />
     </div>
   );
 });
