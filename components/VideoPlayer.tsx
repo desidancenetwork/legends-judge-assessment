@@ -45,9 +45,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
 
   const handlePause = useCallback(() => {
     if (!playerState.hasEnded) {
-      handlePlay();
+      playerRef.current?.getInternalPlayer().playVideo();
     }
-  }, [playerState.hasEnded, handlePlay]);
+  }, [playerState.hasEnded]);
 
   const handleEnded = useCallback(() => {
     setPlayerState(prev => ({ ...prev, isPlaying: false, hasEnded: true }));
@@ -63,7 +63,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
   }, []);
 
   return (
-    <div ref={containerRef} className="relative group">
+    <div ref={containerRef} className="relative group w-full aspect-video">
       <ReactPlayer
         ref={playerRef}
         url={`https://www.youtube.com/watch?v=${youtubeVideoId}`}
@@ -75,15 +75,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
         onProgress={handleProgress}
         onPause={handlePause}
         onEnded={handleEnded}
-        playsinline
-        config={{
+        youtube={{
           playerVars: {
             controls: 0,
             disablekb: 1,
             fs: 0,
-            modestbranding: 1,
             rel: 0,
+            modestbranding: 1,
+            iv_load_policy: 3,
             playsinline: 1,
+          },
+          embedOptions: {
+            preventFullScreen: true,
           },
         }}
       />
@@ -108,6 +111,11 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
           <p className="text-white text-2xl">Video Ended</p>
         </div>
       )}
+      <div 
+        className="absolute inset-0 z-10"
+        onClick={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+      />
     </div>
   );
 });
