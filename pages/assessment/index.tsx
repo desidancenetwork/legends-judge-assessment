@@ -39,7 +39,7 @@ const Assessment = ({ settings }: AssessmentProps) => {
       document.cookie = "hasStartedAssessment=true; path=/";
       setHasStartedAssessment(true);
     }
-  }, [userInfo, router, setHasStartedAssessment]);
+  }, [userInfo, router, settings.assessment.youtubeVideoIds, setHasStartedAssessment]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -190,7 +190,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
   settings.assessment.youtubeVideoIds = settings.assessment.youtubeVideoIds.filter(id => id !== '');
-  
+
   return { props: { settings } };
 };
 
