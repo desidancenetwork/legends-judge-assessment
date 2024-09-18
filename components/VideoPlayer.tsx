@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import ReactPlayer from 'react-player';
+import ReactPlayer from 'react-player/youtube';
 import { Play, Maximize, Minimize } from 'lucide-react';
 
 interface VideoPlayerProps {
@@ -75,32 +75,34 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
         onProgress={handleProgress}
         onPause={handlePause}
         onEnded={handleEnded}
+        pip={false}
         config={{
-          youtube: {
-            playerVars: {
-              controls: 0,
-              disablekb: 1,
-              fs: 0,
-              rel: 0,
-              modestbranding: 1,
-              iv_load_policy: 3,
-              playsinline: 1,
-            },
-            embedOptions: {
-              preventFullScreen: true,
-            },
-          }
+          playerVars: {
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            rel: 0,
+            modestbranding: 1,
+            iv_load_policy: 3,
+            playsinline: 1,
+            showinfo: 0,
+            ecver: 2,
+            enablejsapi: 1,
+          },
+          embedOptions: {
+            preventFullScreen: true,
+          },
         }}
       />
       {!playerState.isPlaying && !playerState.hasEnded && (
         <button
           onClick={handlePlay}
-          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 group-hover:opacity-100"
+          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 group-hover:opacity-100 z-20"
         >
           <Play size={64} className="text-white" />
         </button>
       )}
-      <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-20">
         <button
           onClick={handleFullscreenToggle}
           className="bg-white bg-opacity-25 text-white p-2 rounded-full hover:bg-opacity-50 transition-colors duration-300"
@@ -109,10 +111,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
         </button>
       </div>
       {playerState.hasEnded && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <p className="text-white text-2xl">Video Ended</p>
         </div>
       )}
+      <div 
+        className="absolute inset-0 z-10"
+        onClick={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+      />
+      <style jsx global>{`
+        .ytp-chrome-top, .ytp-chrome-bottom, .ytp-watermark, .ytp-pause-overlay {
+          display: none !important;
+        }
+      `}</style>
     </div>
   );
 });
