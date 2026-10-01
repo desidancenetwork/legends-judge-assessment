@@ -8,6 +8,7 @@
     src: url('/fonts/PontiacInlineShadow.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
   }
 
   @font-face {
@@ -15,6 +16,7 @@
     src: url('/fonts/Graphik-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
   }
 
   body {
@@ -23,36 +25,9 @@
 }
 
 @layer components {
-  .btn,
-  .input,
-  .label,
-  .notes-container,
+  /* Translucent surfaces over the animated gradient. Cards opt into backdrop-blur explicitly. */
   [class^="bg-"],
   [class*=" bg-"] {
-    @apply bg-opacity-50 backdrop-blur-sm;
-  }
-  
-  .btn {
-    @apply px-4 py-2 rounded font-bold text-white transition-colors duration-200;
-  }
-
-  .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-700;
-  }
-
-  .btn-secondary {
-    @apply bg-gray-600 hover:bg-gray-700;
-  }
-
-  .input {
-    @apply mt-1 block w-full rounded-md border-gray-600 bg-gray-700 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500;
-  }
-
-  .label {
-    @apply block text-sm font-medium text-gray-300;
-  }
-
-  .notes-container {
-    @apply max-h-[300px] overflow-y-auto;
+    @apply bg-opacity-50;
   }
 }

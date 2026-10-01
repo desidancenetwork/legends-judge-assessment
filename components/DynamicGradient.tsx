@@ -7,7 +7,6 @@ const DynamicGradient: React.FC = () => {
       <div className={styles.gradientBlob1}></div>
       <div className={styles.gradientBlob2}></div>
       <div className={styles.gradientBlob3}></div>
-      <div className={styles.gradientOverlay}></div>
     </div>
   );
 };

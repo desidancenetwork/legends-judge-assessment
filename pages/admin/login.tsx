@@ -1,26 +1,31 @@
 import { useState } from 'react';
+import { GetServerSideProps } from 'next';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { isAdmin } from '../../utils/adminSession';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSigningIn, setIsSigningIn] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSigningIn(true);
+    setError('');
     const result = await signIn('credentials', {
       redirect: false,
       username,
       password,
-      callbackUrl: '/admin/dashboard'
     });
 
-    if (result?.error) {
+    if (result?.ok) {
+      router.push('/admin/dashboard');
+    } else {
       setError('Invalid username or password');
-    } else if (result?.url) {
-      router.push(result.url);
+      setIsSigningIn(false);
     }
   };
 
@@ -33,7 +38,6 @@ const AdminLogin = () => {
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <input type="hidden" name="remember" value="true" />
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="username" className="sr-only">Username</label>
@@ -41,6 +45,7 @@ const AdminLogin = () => {
                 id="username"
                 name="username"
                 type="text"
+                autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-700 bg-opacity-50 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Username"
@@ -54,6 +59,7 @@ const AdminLogin = () => {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-700 bg-opacity-50 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
@@ -64,21 +70,29 @@ const AdminLogin = () => {
           </div>
 
           {error && (
-            <div className="text-red-400 text-sm">{error}</div>
+            <div className="text-red-400 text-sm" role="alert">{error}</div>
           )}
 
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+              disabled={isSigningIn}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-60"
             >
-              Sign in
+              {isSigningIn ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  if (await isAdmin(context)) {
+    return { redirect: { destination: '/admin/dashboard', permanent: false } };
+  }
+  return { props: {} };
 };
 
 export default AdminLogin;

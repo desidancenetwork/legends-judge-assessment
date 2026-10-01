@@ -1,12 +1,13 @@
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useAssessment } from '../contexts/AssessmentContext';
-import { Ranking, AdminSettings } from '../types/types';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useAssessment } from '../contexts/AssessmentContext';
+import { Ranking } from '../types/types';
+import { MAX_JUSTIFICATION_LENGTH } from '../utils/constants';
 
 interface RankingFormProps {
-  settings: AdminSettings;
   onSubmit: (rankings: Ranking[]) => void;
+  /** Called with the latest rankings after every reorder or edit. */
   onChange: (rankings: Ranking[]) => void;
 }
 
@@ -16,176 +17,150 @@ interface RankingItemProps {
   videoNote: string;
   isNotesExpanded: boolean;
   isJustificationExpanded: boolean;
-  onToggleNotes: () => void;
-  onToggleJustification: () => void;
+  onToggleNotes: (id: string) => void;
+  onToggleJustification: (id: string) => void;
   onJustificationChange: (id: string, value: string) => void;
 }
 
-const RankingItem: React.FC<RankingItemProps> = React.memo(({ 
-  ranking, 
-  index, 
-  videoNote, 
+const RankingItem: React.FC<RankingItemProps> = React.memo(({
+  ranking,
+  index,
+  videoNote,
   isNotesExpanded,
   isJustificationExpanded,
   onToggleNotes,
   onToggleJustification,
   onJustificationChange,
-}) => {
-  const handleJustificationChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onJustificationChange(ranking.id, e.target.value);
-  }, [ranking.id, onJustificationChange]);
-
-  return (
-    <Draggable draggableId={ranking.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          className={`p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-4 ${
-            snapshot.isDragging ? 'shadow-lg' : ''
-          }`}
-        >
-          <div className="flex items-center mb-2">
-            <div {...provided.dragHandleProps} className="mr-2 cursor-grab">
-              <GripVertical size={20} className="text-gray-400" />
-            </div>
-            <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
-            <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
+}) => (
+  <Draggable draggableId={ranking.id} index={index}>
+    {(provided, snapshot) => (
+      <div
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        className={`p-4 bg-gray-700 bg-opacity-50 rounded-lg mb-4 ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+      >
+        <div className="flex items-center mb-2">
+          <div {...provided.dragHandleProps} className="mr-2 cursor-grab" aria-label={`Reorder ${ranking.team}`}>
+            <GripVertical size={20} className="text-gray-400" />
           </div>
-          
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={onToggleNotes}
-              className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
-            >
-              <span>Notes</span>
-              {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
-            </button>
-            {isNotesExpanded && (
-              <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
-                <textarea
-                  value={videoNote}
-                  readOnly
-                  className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded"
-                />
-              </div>
-            )}
-          </div>
-          
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={onToggleJustification}
-              className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
-            >
-              <span>Justification</span>
-              {isJustificationExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
-            </button>
-            {isJustificationExpanded && (
-              <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
-                <textarea
-                  value={ranking.justification}
-                  onChange={handleJustificationChange}
-                  placeholder={`Please justify your ranking for ${ranking.team}`}
-                  className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
-                />
-                <div className="text-right text-sm text-gray-400 mt-1">
-                  {ranking.justification.length} / 1500 characters
-                </div>
-              </div>
-            )}
-          </div>
+          <span className="text-xl font-bold text-white mr-4">{ranking.rank}</span>
+          <h3 className="text-lg font-semibold text-white">{ranking.team}</h3>
         </div>
-      )}
-    </Draggable>
-  );
-}, (prevProps, nextProps) => {
-  return prevProps.ranking === nextProps.ranking &&
-         prevProps.index === nextProps.index &&
-         prevProps.videoNote === nextProps.videoNote &&
-         prevProps.isNotesExpanded === nextProps.isNotesExpanded &&
-         prevProps.isJustificationExpanded === nextProps.isJustificationExpanded;
-});
+
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => onToggleNotes(ranking.id)}
+            aria-expanded={isNotesExpanded}
+            className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
+          >
+            <span>Notes</span>
+            {isNotesExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+          </button>
+          {isNotesExpanded && (
+            <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
+              <textarea
+                value={videoNote}
+                readOnly
+                className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => onToggleJustification(ranking.id)}
+            aria-expanded={isJustificationExpanded}
+            className="w-full text-left text-white p-2 bg-gray-600 rounded-t-lg flex justify-between items-center"
+          >
+            <span>Justification</span>
+            {isJustificationExpanded ? <ChevronUp className="inline" /> : <ChevronDown className="inline" />}
+          </button>
+          {isJustificationExpanded && (
+            <div className="p-2 bg-gray-600 bg-opacity-50 rounded-b-lg">
+              <textarea
+                value={ranking.justification}
+                onChange={(e) => onJustificationChange(ranking.id, e.target.value)}
+                maxLength={MAX_JUSTIFICATION_LENGTH}
+                placeholder={`Please justify your ranking for ${ranking.team}`}
+                className="w-full h-24 p-2 bg-gray-500 bg-opacity-50 text-white border border-gray-600 rounded placeholder-gray-400"
+              />
+              <div className="text-right text-sm text-gray-400 mt-1">
+                {ranking.justification.length} / {MAX_JUSTIFICATION_LENGTH} characters
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+  </Draggable>
+));
 
 RankingItem.displayName = 'RankingItem';
 
-const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange }) => {
+const toggle = (ids: Set<string>, id: string) => {
+  const next = new Set(ids);
+  if (next.has(id)) {
+    next.delete(id);
+  } else {
+    next.add(id);
+  }
+  return next;
+};
+
+const RankingForm: React.FC<RankingFormProps> = ({ onSubmit, onChange }) => {
   const { videoNotes } = useAssessment();
   const [rankings, setRankings] = useState<Ranking[]>(() =>
-    Array.from({ length: videoNotes.length }, (_, index) => ({
+    videoNotes.map((_, index) => ({
       id: `ranking-${index}`,
       team: `Team ${index + 1}`,
       rank: (index + 1).toString(),
       justification: '',
     }))
   );
-  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
-  const [expandedJustifications, setExpandedJustifications] = useState<Set<string>>(() => 
-    new Set(rankings.map(ranking => ranking.id))
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(() => new Set());
+  const [expandedJustifications, setExpandedJustifications] = useState<Set<string>>(
+    () => new Set(rankings.map((ranking) => ranking.id))
   );
+  const [error, setError] = useState('');
 
-  const rankingsRef = useRef(rankings);
+  // Keep the page in sync so an auto-submit at time-up includes everything typed so far.
   useEffect(() => {
-    rankingsRef.current = rankings;
-  }, [rankings]);
+    onChange(rankings);
+  }, [rankings, onChange]);
 
-  const toggleNotes = useCallback((id: string) => {
-    setExpandedNotes(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
-
-  const toggleJustification = useCallback((id: string) => {
-    setExpandedJustifications(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  }, []);
+  const toggleNotes = useCallback((id: string) => setExpandedNotes((prev) => toggle(prev, id)), []);
+  const toggleJustification = useCallback((id: string) => setExpandedJustifications((prev) => toggle(prev, id)), []);
 
   const handleJustificationChange = useCallback((id: string, value: string) => {
-    setRankings(prev => prev.map(ranking => 
-      ranking.id === id ? { ...ranking, justification: value.slice(0, 1500) } : ranking
-    ));
+    setError('');
+    setRankings((prev) => prev.map((ranking) => (ranking.id === id ? { ...ranking, justification: value } : ranking)));
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(rankingsRef.current);
-  }, [onSubmit]);
-
-  const onDragEnd = useCallback((result: DropResult) => {
-    if (!result.destination) {
+  const onDragEnd = useCallback(({ source, destination }: DropResult) => {
+    if (!destination) {
       return;
     }
-
-    setRankings(prev => {
-      const newRankings = Array.from(prev);
-      const [reorderedItem] = newRankings.splice(result.source.index, 1);
-      newRankings.splice(result.destination!.index, 0, reorderedItem);
-
-      const updatedRankings = newRankings.map((ranking, index) => ({
-        ...ranking,
-        rank: (index + 1).toString(),
-      }));
-
-      onChange(updatedRankings);
-      return updatedRankings;
+    setRankings((prev) => {
+      const reordered = [...prev];
+      const [moved] = reordered.splice(source.index, 1);
+      reordered.splice(destination.index, 0, moved);
+      return reordered.map((ranking, index) => ({ ...ranking, rank: (index + 1).toString() }));
     });
-  }, [onChange]);
+  }, []);
 
-  const memoizedRankings = useMemo(() => rankings, [rankings]);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const missing = rankings.filter((ranking) => !ranking.justification.trim());
+    if (missing.length > 0) {
+      setError(`Please add a justification for ${missing.map((ranking) => ranking.team).join(', ')} before submitting.`);
+      setExpandedJustifications((prev) => new Set([...prev, ...missing.map((ranking) => ranking.id)]));
+      return;
+    }
+    onSubmit(rankings);
+  };
 
   return (
     <div className="space-y-8">
@@ -195,16 +170,16 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
           <Droppable droppableId="rankings">
             {(provided) => (
               <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-4">
-                {memoizedRankings.map((ranking, index) => (
+                {rankings.map((ranking, index) => (
                   <RankingItem
                     key={ranking.id}
                     ranking={ranking}
                     index={index}
-                    videoNote={videoNotes[parseInt(ranking.id.split('-')[1])]?.note ?? ''}
+                    videoNote={videoNotes[Number(ranking.id.split('-')[1])]?.note ?? ''}
                     isNotesExpanded={expandedNotes.has(ranking.id)}
                     isJustificationExpanded={expandedJustifications.has(ranking.id)}
-                    onToggleNotes={() => toggleNotes(ranking.id)}
-                    onToggleJustification={() => toggleJustification(ranking.id)}
+                    onToggleNotes={toggleNotes}
+                    onToggleJustification={toggleJustification}
                     onJustificationChange={handleJustificationChange}
                   />
                 ))}
@@ -213,6 +188,7 @@ const RankingForm: React.FC<RankingFormProps> = ({ settings, onSubmit, onChange 
             )}
           </Droppable>
         </DragDropContext>
+        {error && <p className="mt-4 text-center text-sm text-red-400" role="alert">{error}</p>}
         <div className="flex justify-center mt-6">
           <button
             type="submit"

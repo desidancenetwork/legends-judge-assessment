@@ -1,93 +1,47 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createFolder, uploadFileToDrive } from '../../utils/googleDrive';
-import { AssessmentData } from '../../types/types';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { AssessmentData, Ranking, VideoNote } from '../../types/types';
+import { generateAssessmentPdf } from '../../utils/assessmentPdf';
+import { createFolder, safeFileName, uploadFile } from '../../utils/googleDrive';
+import { getSettings } from '../../utils/settingsStore';
+import { createUploadTicket } from '../../utils/uploadTicket';
 
+// Only text is posted here; handwritten notes are uploaded separately via /api/upload-note.
 export const config = {
   api: {
-    bodyParser: true,
+    bodyParser: { sizeLimit: '4mb' },
   },
 };
 
-function generatePDF(data: AssessmentData): Buffer {
-  const doc = new jsPDF();
-  
-  // Add a title
-  doc.setFontSize(20);
-  doc.setTextColor(44, 62, 80); // Dark blue color
-  doc.text('Assessment Report', doc.internal.pageSize.width / 2, 15, { align: 'center' });
-  
-  // Add user information
-  doc.setFontSize(11);
-  doc.setTextColor(52, 73, 94); // Slightly lighter blue
-  doc.text(`Name: ${data.userInfo.name}    Email: ${data.userInfo.email}`, 14, 25);
-  
-  // Function to add table title
-  const addTableTitle = (title: string, y: number) => {
-    doc.setFontSize(14);
-    doc.setTextColor(52, 73, 94);
-    doc.text(title, 14, y);
-    return y + 8; // Return the Y position after the title
-  };
+const isString = (value: unknown, maxLength: number): value is string =>
+  typeof value === 'string' && value.length <= maxLength;
 
-  // Add video notes table title
-  let yPosition = addTableTitle('Video Notes', 35);
-  
-  // Add video notes table
-  (doc as any).autoTable({
-    head: [['Video', 'Notes']],
-    body: data.videoNotes.map((note, index) => [
-      `Video ${index + 1}`,
-      note.note
-    ]),
-    startY: yPosition,
-    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-    alternateRowStyles: { fillColor: [245, 250, 254] },
-    columnStyles: {
-      0: { cellWidth: 20 },
-      1: { cellWidth: 'auto' }
-    },
-    styles: { overflow: 'linebreak', cellPadding: 4, fontSize: 10 },
-    margin: { top: 30 },
-  });
-  
-  // Get the Y position after the video notes table
-  const finalY = (doc as any).lastAutoTable.finalY ?? yPosition;
-  
-  // Add rankings table title
-  yPosition = addTableTitle('Rankings', finalY + 10);
-  
-  // Add rankings table
-  (doc as any).autoTable({
-    head: [['Rank', 'Team', 'Justification']],
-    body: data.rankings.map((ranking, index) => [
-      (index + 1).toString(),
-      ranking.team,
-      ranking.justification
-    ]),
-    startY: yPosition,
-    headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-    alternateRowStyles: { fillColor: [245, 250, 254] },
-    columnStyles: {
-      0: { cellWidth: 20 },
-      1: { cellWidth: 30 },
-      2: { cellWidth: 'auto' }
-    },
-    styles: { overflow: 'linebreak', cellPadding: 4, fontSize: 10 },
-    margin: { top: 30 },
-  });
-  
-  // Add a footer with page numbers
-  const pageCount = (doc as any).internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+function parseAssessment(body: unknown): AssessmentData | null {
+  const { userInfo, videoNotes, rankings } = (body ?? {}) as Partial<Record<keyof AssessmentData, unknown>>;
+  const user = (userInfo ?? {}) as Record<string, unknown>;
+  if (!isString(user.name, 200) || !user.name.trim() || !isString(user.email, 320)) {
+    return null;
   }
-  
-  return Buffer.from(doc.output('arraybuffer'));
+  if (!Array.isArray(videoNotes) || !Array.isArray(rankings)) {
+    return null;
+  }
+
+  const notes = videoNotes as Partial<VideoNote>[];
+  const ranked = rankings as Partial<Ranking>[];
+  if (!notes.every((note) => typeof note?.note === 'string') ||
+      !ranked.every((ranking) => typeof ranking?.team === 'string' && typeof ranking.justification === 'string')) {
+    return null;
+  }
+
+  return {
+    userInfo: { name: user.name.trim(), email: user.email.trim() },
+    videoNotes: notes.map((note, index) => ({ videoId: index, note: note.note as string })),
+    rankings: ranked.map((ranking, index) => ({
+      id: String(ranking.id ?? index),
+      team: ranking.team as string,
+      rank: String(index + 1),
+      justification: ranking.justification as string,
+    })),
+  };
 }
 
 export default async function handler(
@@ -95,51 +49,24 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
+  const assessment = parseAssessment(req.body);
+  if (!assessment) {
+    return res.status(400).json({ message: 'Missing or invalid assessment data' });
+  }
+
   try {
-    const { assessmentData, handwrittenNotes } = req.body;
+    const { googleDrive } = await getSettings();
+    const baseName = safeFileName(assessment.userInfo.name);
+    const folderId = await createFolder(`${baseName}_${new Date().toISOString().split('T')[0]}`, googleDrive.folderId);
+    await uploadFile(folderId, `${baseName}_assessment.pdf`, 'application/pdf', generateAssessmentPdf(assessment));
 
-    if (!assessmentData ?? !handwrittenNotes) {
-      return res.status(400).json({ message: 'Missing required data' });
-    }
-
-    const folderName = `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`;
-    const folderId = await createFolder(folderName);
-
-    const pdfBuffer = generatePDF(assessmentData);
-    const pdfFileId = await uploadFileToDrive(
-      pdfBuffer,
-      `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_assessment.pdf`,
-      'application/pdf',
-      folderId
-    );
-
-    const uploadedNoteIds = await Promise.all(
-      handwrittenNotes.map(async (note: { data: string, type: string }, index: number) => {
-        const content = Buffer.from(note.data.split(',')[1], 'base64');
-        const noteId = await uploadFileToDrive(
-          content,
-          `${assessmentData.userInfo.name.replace(/\s+/g, '_')}_note${index + 1}.${note.type.split('/')[1]}`,
-          note.type,
-          folderId
-        );
-        return noteId;
-      })
-    );
-
-    res.status(200).json({ 
-      message: 'Assessment submitted successfully', 
-      folderId, 
-      pdfFileId, 
-      uploadedNoteIds 
-    });
+    res.status(200).json({ uploadTicket: createUploadTicket(folderId, baseName) });
   } catch (error) {
     console.error('Error in submit-assessment:', error);
-    res.status(500).json({ 
-      message: 'Error submitting assessment', 
-      error: error instanceof Error ? error.stack : String(error)
-    });
+    res.status(500).json({ message: 'Error submitting assessment' });
   }
 }

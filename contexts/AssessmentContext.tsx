@@ -1,17 +1,16 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { Ranking, VideoNote } from '../types/types';
+import { Ranking, UserInfo, VideoNote } from '../types/types';
+import { clearFlowCookies } from '../utils/flowCookies';
 
 interface AssessmentContextType {
-  userInfo: { name: string; email: string } | null;
-  setUserInfo: (info: { name: string; email: string } | null) => void;
+  userInfo: UserInfo | null;
+  setUserInfo: (info: UserInfo | null) => void;
   videoNotes: VideoNote[];
   addVideoNote: (note: VideoNote) => void;
   rankings: Ranking[];
   setRankings: (rankings: Ranking[]) => void;
   currentVideoIndex: number;
   setCurrentVideoIndex: (index: number) => void;
-  hasStartedAssessment: boolean;
-  setHasStartedAssessment: (started: boolean) => void;
   hasCompletedAssessment: boolean;
   setHasCompletedAssessment: (completed: boolean) => void;
   hasCompletedRanking: boolean;
@@ -22,11 +21,10 @@ interface AssessmentContextType {
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
 
 export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [videoNotes, setVideoNotes] = useState<VideoNote[]>([]);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [hasStartedAssessment, setHasStartedAssessment] = useState(false);
   const [hasCompletedAssessment, setHasCompletedAssessment] = useState(false);
   const [hasCompletedRanking, setHasCompletedRanking] = useState(false);
 
@@ -39,6 +37,9 @@ export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setVideoNotes([]);
     setRankings([]);
     setCurrentVideoIndex(0);
+    setHasCompletedAssessment(false);
+    setHasCompletedRanking(false);
+    clearFlowCookies();
   }, []);
 
   const value = useMemo(() => ({
@@ -50,31 +51,13 @@ export const AssessmentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setRankings,
     currentVideoIndex,
     setCurrentVideoIndex,
-    hasStartedAssessment,
-    setHasStartedAssessment,
     hasCompletedAssessment,
     setHasCompletedAssessment,
     hasCompletedRanking,
     setHasCompletedRanking,
     resetAssessment,
-  }), [
-    userInfo,
-    setUserInfo,
-    videoNotes,
-    addVideoNote,
-    rankings,
-    setRankings,
-    currentVideoIndex,
-    setCurrentVideoIndex,
-    hasStartedAssessment,
-    setHasStartedAssessment,
-    hasCompletedAssessment,
-    setHasCompletedAssessment,
-    hasCompletedRanking,
-    setHasCompletedRanking,
-    resetAssessment,
-  ]);
-  
+  }), [userInfo, videoNotes, addVideoNote, rankings, currentVideoIndex, hasCompletedAssessment, hasCompletedRanking, resetAssessment]);
+
   return (
     <AssessmentContext.Provider value={value}>
       {children}

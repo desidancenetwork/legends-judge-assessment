@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+.idea/
+.vscode/
 
 # debug
 npm-debug.log*
@@ -26,7 +28,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env*
+!.env.example
+
+# local submissions written when Google credentials aren't configured
+/.local-submissions/
 
 # vercel
 .vercel

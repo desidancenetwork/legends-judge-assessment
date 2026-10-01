@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import dns from 'dns';
+import { promises as dns } from 'dns';
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,20 +7,16 @@ export default async function handler(
 ) {
   const { domain } = req.query;
 
-  if (!domain ?? typeof domain !== 'string') {
+  if (typeof domain !== 'string' || !/^[a-z0-9.-]{1,253}$/i.test(domain)) {
     return res.status(400).json({ error: 'Invalid domain' });
   }
 
   try {
-    await new Promise((resolve, reject) => {
-      dns.resolveMx(domain, (err, addresses) => {
-        if (err) reject(err);
-        else resolve(addresses);
-      });
-    });
-    res.status(200).json({ isValid: true });
+    const records = await dns.resolveMx(domain);
+    res.status(200).json({ isValid: records.length > 0 });
   } catch (error) {
-    console.error('Error resolving MX records:', error);
-    res.status(200).json({ isValid: false });
+    // Only reject domains that definitely can't receive mail; a DNS hiccup shouldn't block a judge from registering.
+    const code = (error as NodeJS.ErrnoException).code;
+    res.status(200).json({ isValid: code !== 'ENOTFOUND' && code !== 'ENODATA' });
   }
 }

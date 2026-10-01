@@ -3,50 +3,36 @@ export type UserInfo = {
   email: string;
 };
 
-export type FormData = {
+export type RegistrationFormValues = {
   name: string;
   email: string;
   confirmEmail: string;
 };
-  
+
 export type VideoNote = {
   videoId: number;
   note: string;
 };
 
-export type VideoSlot = {
-  id: string;
-  file: File | null;
-  url: string | null;
-  originalName: string | null;
-  uploading: boolean;
-  error: string | null;
-};
-
-export type VideoReference = {
-  [key: string]: {
-    fileName: string;
-    publicPath: string;
-  };
-};
-  
 export type Ranking = {
-  id: string
+  id: string;
   team: string;
   rank: string;
   justification: string;
 };
-  
+
 export type AssessmentData = {
   userInfo: UserInfo;
   videoNotes: VideoNote[];
   rankings: Ranking[];
 };
-  
+
 export type AdminSettings = {
   assessment: {
+    /** Seconds of note-taking time after each video ends. */
     additionalTime: number;
     totalVideos: number;
+    /** Seconds allowed for the ranking step. */
     rankingTime: number;
     youtubeVideoIds: string[];
   };
@@ -54,11 +40,3 @@ export type AdminSettings = {
     folderId: string;
   };
 };
-  
-export type AssessmentVideo = {
-  id: string;
-  name: string;
-  source: 'local' | 'drive';
-  file?: File;
-  webViewLink?: string;
-}

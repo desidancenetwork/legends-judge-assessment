@@ -13,6 +13,7 @@
   border-radius: 50%;
   filter: blur(60px);
   opacity: 0.5;
+  will-change: transform;
 }
 
 .gradientBlob1 {
@@ -55,4 +56,10 @@
 @keyframes move3 {
   0% { transform: translate(0, 0); }
   100% { transform: translate(-5%, -2.5%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradientBlob1, .gradientBlob2, .gradientBlob3 {
+    animation: none;
+  }
 }

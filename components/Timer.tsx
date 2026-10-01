@@ -1,79 +1,45 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface TimerProps {
-  timeRemaining: number;
-  setTimeRemaining: React.Dispatch<React.SetStateAction<number>>;
+  durationSeconds: number;
   onTimeUp: () => void;
-  totalTime: number;
 }
 
-const Timer: React.FC<TimerProps> = React.memo(({ timeRemaining, setTimeRemaining, onTimeUp, totalTime }) => {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
-
-  const updateTime = useCallback(() => {
-    if (isVisible) {
-      setTimeRemaining((prevTime) => {
-        if (prevTime <= 1) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          onTimeUp();
-          return 0;
-        }
-        return prevTime - 1;
-      });
-    }
-  }, [setTimeRemaining, onTimeUp, isVisible]);
+// Counts down against a fixed deadline, so the time stays accurate even when the browser
+// throttles timers (for example while the judge has another tab in front).
+const Timer: React.FC<TimerProps> = React.memo(({ durationSeconds, onTimeUp }) => {
+  const [remaining, setRemaining] = useState(durationSeconds);
+  const onTimeUpRef = useRef(onTimeUp);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTimerRef = timerRef.current;
-
-    if (currentTimerRef) {
-      observer.observe(currentTimerRef);
-    }
-
-    return () => {
-      if (currentTimerRef) {
-        observer.unobserve(currentTimerRef);
-      }
-    };
-  }, []);
+    onTimeUpRef.current = onTimeUp;
+  }, [onTimeUp]);
 
   useEffect(() => {
-    if (isVisible) {
-      intervalRef.current = setInterval(updateTime, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+    const deadline = Date.now() + durationSeconds * 1000;
+    const interval = setInterval(() => {
+      const secondsLeft = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setRemaining(secondsLeft);
+      if (secondsLeft === 0) {
+        clearInterval(interval);
+        onTimeUpRef.current();
       }
-    };
-  }, [updateTime, isVisible]);
+    }, 250);
+    return () => clearInterval(interval);
+  }, [durationSeconds]);
 
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
-  const percentage = (timeRemaining / totalTime) * 100;
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  const percentage = durationSeconds > 0 ? (remaining / durationSeconds) * 100 : 0;
 
   return (
-    <div ref={timerRef} className="w-full max-w-md mx-auto">
-      <div className="mb-2 text-2xl font-bold text-center text-white">
-        {`${minutes}:${seconds < 10 ? '0' : ''}${seconds}`}
+    <div className="w-full max-w-md mx-auto" role="timer">
+      <div className={`mb-2 text-2xl font-bold text-center ${remaining <= 60 ? 'text-red-400' : 'text-white'}`}>
+        {`${minutes}:${seconds.toString().padStart(2, '0')}`}
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-        <div 
-          className="bg-blue-600 h-2.5 rounded-full" 
+        <div
+          className="bg-blue-600 h-2.5 rounded-full"
           style={{ width: `${percentage}%`, transition: 'width 1s linear' }}
         ></div>
       </div>

@@ -1,62 +1,78 @@
-import * as google from 'googleapis';
+import { promises as fs } from 'fs';
+import path from 'path';
 import { Readable } from 'stream';
+import { auth, drive as createDrive, type drive_v3 } from '@googleapis/drive';
 
-const auth = new google.Auth.GoogleAuth({
-  credentials: {
-    type: 'service_account',
-    project_id: process.env.GOOGLE_CREDENTIALS_PROJECT_ID,
-    private_key_id: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY_ID,
-    private_key: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY,
-    client_email: process.env.GOOGLE_CREDENTIALS_CLIENT_EMAIL,
-    client_id: process.env.GOOGLE_CREDENTIALS_CLIENT_ID,
-    universe_domain: 'googleapis.com',
-  },
-  scopes: ['https://www.googleapis.com/auth/drive.file'],
-});
+let client: drive_v3.Drive | null | undefined;
 
-const drive = new google.drive_v3.Drive({ auth });
+function getDrive(): drive_v3.Drive | null {
+  if (client !== undefined) return client;
 
-export const createFolder = async (folderName: string, parentFolderId?: string): Promise<string> => {
-  try {
-    const fileMetadata = {
-      name: folderName,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: parentFolderId ? [parentFolderId] : [process.env.NEXT_PUBLIC_GOOGLE_DRIVE_FOLDER_ID ?? 'root'],
-    };
-
-    const res = await drive.files.create({
-      requestBody: fileMetadata,
-      fields: 'id',
-    });
-
-    return res.data.id!;
-  } catch (err) {
-    console.error('Error creating folder in Google Drive:', err);
-    throw err;
+  const clientEmail = process.env.GOOGLE_CREDENTIALS_CLIENT_EMAIL;
+  const privateKey = process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY;
+  if (!clientEmail || !privateKey) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('GOOGLE_CREDENTIALS_CLIENT_EMAIL and GOOGLE_CREDENTIALS_PRIVATE_KEY must be set in production.');
+    }
+    client = null;
+    return client;
   }
-};
 
-export const uploadFileToDrive = async (fileContent: Buffer, fileName: string, mimeType: string, folderId: string) => {
-  try {
-    const fileMetadata = {
-      name: fileName,
-      parents: [folderId],
-    };
+  const googleAuth = new auth.GoogleAuth({
+    credentials: {
+      type: 'service_account',
+      project_id: process.env.GOOGLE_CREDENTIALS_PROJECT_ID,
+      private_key_id: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY_ID,
+      // Keys copied out of the JSON key file keep their "\n" escapes; restore real newlines.
+      private_key: privateKey.replace(/\\n/g, '\n'),
+      client_email: clientEmail,
+      client_id: process.env.GOOGLE_CREDENTIALS_CLIENT_ID,
+    },
+    scopes: ['https://www.googleapis.com/auth/drive.file'],
+  });
+  client = createDrive({ version: 'v3', auth: googleAuth });
+  return client;
+}
 
-    const media = {
-      mimeType: mimeType,
-      body: Readable.from(fileContent),
-    };
+// Local development without Google credentials: submissions are written here instead.
+const LOCAL_SUBMISSIONS_DIR = path.join(process.cwd(), '.local-submissions');
 
-    const res = await drive.files.create({
-      requestBody: fileMetadata,
-      media: media,
-      fields: 'id',
-    });
+/** Makes a judge's name safe to use in file and folder names. */
+export function safeFileName(name: string): string {
+  return name.trim().replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(0, 80) || 'judge';
+}
 
-    return res.data.id;
-  } catch (err) {
-    console.error('Error uploading file to Google Drive:', err);
-    throw err;
+export async function createFolder(name: string, parentId: string): Promise<string> {
+  const drive = getDrive();
+  if (!drive) {
+    const folderId = `${name}_${Date.now()}`;
+    await fs.mkdir(path.join(LOCAL_SUBMISSIONS_DIR, folderId), { recursive: true });
+    return folderId;
   }
-};
+  if (!parentId) {
+    throw new Error('No Google Drive folder is configured in Admin → Settings.');
+  }
+
+  const res = await drive.files.create({
+    requestBody: { name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] },
+    fields: 'id',
+    supportsAllDrives: true,
+  });
+  if (!res.data.id) throw new Error('Google Drive did not return a folder id.');
+  return res.data.id;
+}
+
+export async function uploadFile(folderId: string, name: string, mimeType: string, content: Buffer): Promise<void> {
+  const drive = getDrive();
+  if (!drive) {
+    await fs.writeFile(path.join(LOCAL_SUBMISSIONS_DIR, folderId, name), content);
+    return;
+  }
+
+  await drive.files.create({
+    requestBody: { name, parents: [folderId] },
+    media: { mimeType, body: Readable.from(content) },
+    fields: 'id',
+    supportsAllDrives: true,
+  });
+}

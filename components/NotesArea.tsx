@@ -1,23 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface NotesAreaProps {
-  onSubmit: (note: string) => void;
   onChange: (note: string) => void;
 }
 
-const NotesArea: React.FC<NotesAreaProps> = ({ onSubmit, onChange }) => {
+const NotesArea: React.FC<NotesAreaProps> = ({ onChange }) => {
   const [note, setNote] = useState('');
 
-  useEffect(() => {
-    onChange(note);
-  }, [note, onChange]);
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNote(e.target.value);
+    onChange(e.target.value);
+  };
 
   return (
     <div className="mt-4">
       <textarea
         value={note}
-        onChange={(e) => setNote(e.target.value)}
-        className="w-full h-40 p-2 bg-gray-700 text-white border border-gray-600 rounded"
+        onChange={handleChange}
+        aria-label="Notes"
+        className="w-full h-48 p-2 bg-gray-700 text-white border border-gray-600 rounded"
         placeholder="Take notes here..."
       />
     </div>

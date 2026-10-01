@@ -1,47 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
-  images: {
-    domains: [],
-  },
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-  },
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        fs: false,
-        path: false,
-      }
-    }
-    return config
-  },
-  env: {
-    KV_URL: process.env.KV_URL,
-    KV_REST_API_URL: process.env.KV_REST_API_URL,
-    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
-    KV_REST_API_READ_ONLY_TOKEN: process.env.KV_REST_API_READ_ONLY_TOKEN,
-    GOOGLE_CREDENTIALS_PROJECT_ID: process.env.GOOGLE_CREDENTIALS_PROJECT_ID,
-    GOOGLE_CREDENTIALS_PRIVATE_KEY_ID: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY_ID,
-    GOOGLE_CREDENTIALS_PRIVATE_KEY: process.env.GOOGLE_CREDENTIALS_PRIVATE_KEY,
-    GOOGLE_CREDENTIALS_CLIENT_EMAIL: process.env.GOOGLE_CREDENTIALS_CLIENT_EMAIL,
-    GOOGLE_CREDENTIALS_CLIENT_ID: process.env.GOOGLE_CREDENTIALS_CLIENT_ID,
-  },
+  poweredByHeader: false,
+  // Never add an `env` block here: values listed in it are inlined into the public browser bundle.
   async headers() {
     return [
       {
-        source: "/api/:path*",
+        source: '/:path*',
         headers: [
-          { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: "https://ddn-legends-judge-assessment.vercel.app" },
-          { key: "Access-Control-Allow-Methods", value: "GET,DELETE,PATCH,POST,PUT" },
-          { key: "Access-Control-Allow-Headers", value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" },
-        ]
-      }
-    ]
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // YouTube embeds require the page origin as the referrer, so don't tighten this to no-referrer.
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+        ],
+      },
+    ];
   },
 };
 

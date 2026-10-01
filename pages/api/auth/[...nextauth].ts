@@ -1,7 +1,18 @@
-import NextAuth, { User } from 'next-auth';
+import { createHash, timingSafeEqual } from 'crypto';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
-export default NextAuth({
+const digest = (value: string) => createHash('sha256').update(value).digest();
+
+// Constant-time comparison so response timing doesn't leak how much of a guess was right.
+function matches(input: string | undefined, expected: string | undefined): boolean {
+  if (!input || !expected) {
+    return false;
+  }
+  return timingSafeEqual(digest(input), digest(expected));
+}
+
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -9,31 +20,21 @@ export default NextAuth({
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials, req): Promise<User | null> {
-        if (credentials?.username === process.env.ADMIN_USERNAME && 
-            credentials?.password === process.env.ADMIN_PASSWORD) {
-          return { id: '1', name: 'Admin', email: 'admin@ddn-legends.com' };
-        }
-        return null;
+      async authorize(credentials) {
+        const usernameMatches = matches(credentials?.username, process.env.ADMIN_USERNAME);
+        const passwordMatches = matches(credentials?.password, process.env.ADMIN_PASSWORD);
+        return usernameMatches && passwordMatches ? { id: 'admin', name: 'Admin' } : null;
       }
     })
   ],
   pages: {
     signIn: '/admin/login',
   },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        (session.user as any).id = token.id;
-      }
-      return session;
-    },
+  session: {
+    strategy: 'jwt',
+    maxAge: 12 * 60 * 60,
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+export default NextAuth(authOptions);

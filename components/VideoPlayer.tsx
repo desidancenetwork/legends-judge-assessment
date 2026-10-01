@@ -1,14 +1,17 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import ReactPlayer from 'react-player/youtube';
 import { Play, Maximize, Minimize } from 'lucide-react';
+import { CONTACT_EMAIL } from '../utils/constants';
 
 interface VideoPlayerProps {
   youtubeVideoId: string;
-  onPlay: () => void;
+  onPlay?: () => void;
   onEnded: () => void;
   onProgress: (progress: number) => void;
 }
 
+// Judges watch each video once, start to finish: there are no YouTube controls,
+// pausing resumes playback, and the video can't be replayed after it ends.
 const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, onPlay, onEnded, onProgress }) => {
   const [playerState, setPlayerState] = useState({
     isPlaying: false,
@@ -16,10 +19,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
     hasEnded: false,
     isFullscreen: false,
   });
+  const [hasError, setHasError] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(false);
   const playerRef = useRef<ReactPlayer>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // iPhones don't support fullscreen for anything but native video elements.
+    setCanFullscreen(document.fullscreenEnabled);
+
     const handleFullscreenChange = () => {
       setPlayerState(prev => ({ ...prev, isFullscreen: !!document.fullscreenElement }));
     };
@@ -37,7 +45,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
   const handlePlay = useCallback(() => {
     if (!playerState.hasStarted && !playerState.hasEnded) {
       setPlayerState(prev => ({ ...prev, isPlaying: true, hasStarted: true }));
-      onPlay();
+      onPlay?.();
     } else if (!playerState.hasEnded) {
       setPlayerState(prev => ({ ...prev, isPlaying: true }));
     }
@@ -54,9 +62,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
     onEnded();
   }, [onEnded]);
 
+  const handleError = useCallback(() => {
+    setHasError(true);
+  }, []);
+
   const handleFullscreenToggle = useCallback(() => {
     if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen();
+      containerRef.current?.requestFullscreen().catch(() => undefined);
     } else {
       document.exitFullscreen();
     }
@@ -75,6 +87,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
         onProgress={handleProgress}
         onPause={handlePause}
         onEnded={handleEnded}
+        onError={handleError}
         pip={false}
         config={{
           playerVars: {
@@ -82,49 +95,54 @@ const VideoPlayer: React.FC<VideoPlayerProps> = React.memo(({ youtubeVideoId, on
             disablekb: 1,
             fs: 0,
             rel: 0,
-            modestbranding: 1,
             iv_load_policy: 3,
             playsinline: 1,
-            showinfo: 0,
-            ecver: 2,
-            enablejsapi: 1,
-          },
-          embedOptions: {
-            preventFullScreen: true,
           },
         }}
       />
-      {!playerState.isPlaying && !playerState.hasEnded && (
-        <button
-          onClick={handlePlay}
-          className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 group-hover:opacity-100 z-20"
-        >
-          <Play size={64} className="text-white" />
-        </button>
+      {hasError ? (
+        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center text-center p-6 z-20">
+          <p className="text-white text-xl mb-2">This video couldn&apos;t be loaded.</p>
+          <p className="text-gray-300">
+            Please let us know at{' '}
+            <a href={`mailto:${CONTACT_EMAIL}`} className="text-indigo-400 underline hover:text-indigo-300">
+              {CONTACT_EMAIL}
+            </a>
+            , then continue with the rest of the assessment.
+          </p>
+        </div>
+      ) : (
+        !playerState.isPlaying && !playerState.hasEnded && (
+          <button
+            onClick={handlePlay}
+            aria-label="Play video"
+            className="absolute inset-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300 group-hover:opacity-100 z-20"
+          >
+            <Play size={64} className="text-white" />
+          </button>
+        )
       )}
-      <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-20">
-        <button
-          onClick={handleFullscreenToggle}
-          className="bg-white bg-opacity-25 text-white p-2 rounded-full hover:bg-opacity-50 transition-colors duration-300"
-        >
-          {playerState.isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
-        </button>
-      </div>
+      {canFullscreen && (
+        <div className="absolute bottom-0 right-0 p-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-within:opacity-100 z-20">
+          <button
+            onClick={handleFullscreenToggle}
+            aria-label={playerState.isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className="bg-white bg-opacity-25 text-white p-2 rounded-full hover:bg-opacity-50 transition-colors duration-300"
+          >
+            {playerState.isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+          </button>
+        </div>
+      )}
       {playerState.hasEnded && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20">
           <p className="text-white text-2xl">Video Ended</p>
         </div>
       )}
-      <div 
+      <div
         className="absolute inset-0 z-10"
         onClick={(e) => e.preventDefault()}
         onContextMenu={(e) => e.preventDefault()}
       />
-      <style jsx global>{`
-        .ytp-chrome-top, .ytp-chrome-bottom, .ytp-watermark, .ytp-pause-overlay {
-          display: none !important;
-        }
-      `}</style>
     </div>
   );
 });

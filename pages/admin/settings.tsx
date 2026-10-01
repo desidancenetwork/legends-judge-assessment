@@ -1,140 +1,99 @@
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
 import { AdminSettings } from '../../types/types';
-import { getSettings, updateSettings } from '../../utils/kvUtils';
+import { LOGIN_REDIRECT, isAdmin } from '../../utils/adminSession';
+import { MAX_VIDEOS } from '../../utils/constants';
+import { parseDriveFolderId, parseYouTubeId, validateSettings } from '../../utils/settings';
+import { getSettings } from '../../utils/settingsStore';
 
 interface SettingsProps {
   initialSettings: AdminSettings;
 }
 
+// Times are edited in minutes but stored in seconds.
+type FormState = {
+  additionalMinutes: string;
+  rankingMinutes: string;
+  totalVideos: number;
+  videoInputs: string[];
+  folderInput: string;
+};
+
+const toForm = ({ assessment, googleDrive }: AdminSettings): FormState => ({
+  additionalMinutes: String(assessment.additionalTime / 60),
+  rankingMinutes: String(assessment.rankingTime / 60),
+  totalVideos: Math.min(Math.max(assessment.totalVideos, 1), MAX_VIDEOS),
+  videoInputs: Array.from({ length: MAX_VIDEOS }, (_, index) => assessment.youtubeVideoIds[index] ?? ''),
+  folderInput: googleDrive.folderId,
+});
+
+const minutesToSeconds = (value: string) => (value.trim() === '' ? NaN : Math.round(Number(value) * 60));
+
+const fromForm = (form: FormState): AdminSettings => ({
+  assessment: {
+    additionalTime: minutesToSeconds(form.additionalMinutes),
+    rankingTime: minutesToSeconds(form.rankingMinutes),
+    totalVideos: form.totalVideos,
+    youtubeVideoIds: form.videoInputs.slice(0, form.totalVideos).map((input) => parseYouTubeId(input) ?? input.trim()),
+  },
+  googleDrive: {
+    folderId: parseDriveFolderId(form.folderInput),
+  },
+});
+
+const inputBaseClassName = 'block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm';
+const inputClassName = `mt-1 ${inputBaseClassName}`;
+const labelClassName = 'block text-sm font-medium text-gray-200';
+
 const Settings = ({ initialSettings }: SettingsProps) => {
-  const { data: session, status } = useSession();
   const router = useRouter();
-  const [localSettings, setLocalSettings] = useState<AdminSettings>({
-    ...initialSettings,
-    assessment: {
-      ...initialSettings.assessment,
-      additionalTime: initialSettings.assessment.additionalTime / 60,
-      rankingTime: initialSettings.assessment.rankingTime / 60,
-      youtubeVideoIds: initialSettings.assessment.youtubeVideoIds || ['', '', ''],
-    }
-  });
+  const [form, setForm] = useState<FormState>(() => toForm(initialSettings));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/admin/login');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
-    return <div className="text-white text-center mt-10">Loading...</div>;
-  }
-
-  if (!session) {
-    return null;
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const [section, key] = name.split('.');
-
-    setLocalSettings((prev) => {
-      if (section === 'assessment') {
-        if (key.startsWith('youtubeVideoId')) {
-          const index = parseInt(key.slice(-1)) - 1;
-          const newYoutubeVideoIds = [...prev.assessment.youtubeVideoIds];
-          newYoutubeVideoIds[index] = value;
-          return {
-            ...prev,
-            assessment: {
-              ...prev.assessment,
-              youtubeVideoIds: newYoutubeVideoIds,
-            },
-          };
-        }
-        return {
-          ...prev,
-          assessment: {
-            ...prev.assessment,
-            [key]: value,
-          },
-        };
-      } else {
-        return { ...prev, [name]: value };
-      }
-    });
+  const update = (changes: Partial<FormState>) => {
+    setForm((prev) => ({ ...prev, ...changes }));
+    setSaved(false);
   };
 
-  const validateSettings = (settings: AdminSettings): string | null => {
-    const { assessment } = settings;
-
-    const totalVideos = Number(assessment.totalVideos);
-    if (isNaN(totalVideos) || totalVideos < 0 || totalVideos > 5) {
-      return 'Total videos must be between 0 and 5.';
-    }
-
-    const additionalTime = Number(assessment.additionalTime);
-    if (isNaN(additionalTime) || additionalTime < 0 || additionalTime > 10) {
-      return 'Additional time must be between 0 and 10 minutes.';
-    }
-
-    const rankingTime = Number(assessment.rankingTime);
-    if (isNaN(rankingTime) || rankingTime < 0 || rankingTime > 30) {
-      return 'Ranking time must be between 0 and 30 minutes.';
-    }
-
-    const youtubeVideoIds = assessment.youtubeVideoIds;
-    if (youtubeVideoIds.some(id => id.length > 0 && id.length !== 11)) {
-      return 'YouTube Video IDs must be 11 characters long.';
-    }
-
-    return null;
-  };
+  const updateVideo = (index: number, value: string) =>
+    update({ videoInputs: form.videoInputs.map((input, i) => (i === index ? value : input)) });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError('');
+    setSaved(false);
 
-    const validationError = validateSettings(localSettings);
+    const settings = fromForm(form);
+    const validationError = validateSettings(settings);
     if (validationError) {
       setError(validationError);
-      setSaving(false);
       return;
     }
 
-    const settingsToSubmit = {
-      ...localSettings,
-      assessment: {
-        ...localSettings.assessment,
-        additionalTime: Number(localSettings.assessment.additionalTime) * 60,
-        totalVideos: Number(localSettings.assessment.totalVideos),
-        rankingTime: Number(localSettings.assessment.rankingTime) * 60,
-      },
-    };
-
+    setSaving(true);
     try {
-      await updateSettings(settingsToSubmit);
-      const updatedSettings = await getSettings();
-
-      setLocalSettings({
-        ...updatedSettings,
-        assessment: {
-          ...updatedSettings.assessment,
-          additionalTime: updatedSettings.assessment.additionalTime / 60,
-          rankingTime: updatedSettings.assessment.rankingTime / 60,
-        }
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
       });
-
-      alert('Settings updated successfully!');
+      if (response.status === 401) {
+        router.push('/admin/login');
+        return;
+      }
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.message ?? 'Failed to update settings');
+      }
+      setForm(toForm(body));
+      setSaved(true);
     } catch (err) {
       console.error('Error updating settings:', err);
-      setError(`Failed to update settings. Please try again.`);
+      setError(err instanceof Error ? err.message : 'Failed to update settings. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -152,88 +111,106 @@ const Settings = ({ initialSettings }: SettingsProps) => {
           <h1 className="text-3xl font-pontiac text-white text-center mb-8 text-shadow-lg">Application Settings</h1>
           <div className="bg-black bg-opacity-40 backdrop-blur-sm rounded-lg p-6 shadow-xl">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="assessment.additionalTime" className="block text-sm font-medium text-gray-200">
-                  Additional Time (0-10 min)
-                </label>
-                <input
-                  type="number"
-                  name="assessment.additionalTime"
-                  id="assessment.additionalTime"
-                  value={localSettings.assessment.additionalTime}
-                  onChange={handleChange}
-                  min={0}
-                  max={10}
-                  step={0.5}
-                  className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="assessment.totalVideos" className="block text-sm font-medium text-gray-200">
-                  Total Videos (0-5)
-                </label>
-                <input
-                  type="number"
-                  name="assessment.totalVideos"
-                  id="assessment.totalVideos"
-                  value={localSettings.assessment.totalVideos}
-                  onChange={handleChange}
-                  min={0}
-                  max={5}
-                  className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
-                />
-              </div>
-              <div>
-                <label htmlFor="assessment.rankingTime" className="block text-sm font-medium text-gray-200">
-                  Ranking Time (0-30 min)
-                </label>
-                <input
-                  type="number"
-                  name="assessment.rankingTime"
-                  id="assessment.rankingTime"
-                  value={localSettings.assessment.rankingTime}
-                  onChange={handleChange}
-                  min={0}
-                  max={30}
-                  step={0.5}
-                  className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
-                />
-              </div>
-              {[1, 2, 3].map((num) => (
-                <div key={`youtubeVideoId${num}`}>
-                  <label htmlFor={`assessment.youtubeVideoId${num}`} className="block text-sm font-medium text-gray-200">
-                    YouTube Video ID {num}
+              <div className="grid gap-6 sm:grid-cols-3">
+                <div>
+                  <label htmlFor="totalVideos" className={labelClassName}>Number of videos</label>
+                  <select
+                    id="totalVideos"
+                    value={form.totalVideos}
+                    onChange={(e) => update({ totalVideos: Number(e.target.value) })}
+                    className={inputClassName}
+                  >
+                    {Array.from({ length: MAX_VIDEOS }, (_, index) => index + 1).map((count) => (
+                      <option key={count} value={count}>{count}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="additionalMinutes" className={labelClassName}>
+                    Note time after each video (0-10 min)
                   </label>
                   <input
-                    type="text"
-                    name={`assessment.youtubeVideoId${num}`}
-                    id={`assessment.youtubeVideoId${num}`}
-                    value={localSettings.assessment.youtubeVideoIds[num - 1]}
-                    onChange={handleChange}
-                    maxLength={11}
-                    className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
+                    type="number"
+                    id="additionalMinutes"
+                    value={form.additionalMinutes}
+                    onChange={(e) => update({ additionalMinutes: e.target.value })}
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    className={inputClassName}
                   />
                 </div>
-              ))}
+                <div>
+                  <label htmlFor="rankingMinutes" className={labelClassName}>
+                    Ranking time (1-30 min)
+                  </label>
+                  <input
+                    type="number"
+                    id="rankingMinutes"
+                    value={form.rankingMinutes}
+                    onChange={(e) => update({ rankingMinutes: e.target.value })}
+                    min={1}
+                    max={30}
+                    step={0.5}
+                    className={inputClassName}
+                  />
+                </div>
+              </div>
+
+              {form.videoInputs.slice(0, form.totalVideos).map((input, index) => {
+                const videoId = parseYouTubeId(input);
+                return (
+                  <div key={index}>
+                    <label htmlFor={`video${index + 1}`} className={labelClassName}>
+                      Video {index + 1} (YouTube link or video ID)
+                    </label>
+                    <div className="mt-1 flex items-center gap-3">
+                      <input
+                        type="text"
+                        id={`video${index + 1}`}
+                        value={input}
+                        onChange={(e) => updateVideo(index, e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=…"
+                        className={inputBaseClassName}
+                      />
+                      {videoId && (
+                        <a href={`https://www.youtube.com/watch?v=${videoId}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element -- small external thumbnail, no optimization needed */}
+                          <img src={`https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`} alt={`Video ${index + 1} thumbnail`} className="h-12 w-auto rounded" />
+                        </a>
+                      )}
+                    </div>
+                    {input.trim() && !videoId && (
+                      <p className="mt-1 text-sm text-yellow-300">That doesn&apos;t look like a YouTube link or video ID.</p>
+                    )}
+                  </div>
+                );
+              })}
+
               <div>
-                <label htmlFor="googleDrive.folderId" className="block text-sm font-medium text-gray-200">
-                  Google Drive Folder ID
+                <label htmlFor="folder" className={labelClassName}>
+                  Google Drive submissions folder (link or folder ID)
                 </label>
                 <input
                   type="text"
-                  name="googleDrive.folderId"
-                  id="googleDrive.folderId"
-                  value={localSettings.googleDrive.folderId}
-                  onChange={handleChange}
-                  className="mt-1 block w-full bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-white sm:text-sm"
+                  id="folder"
+                  value={form.folderInput}
+                  onChange={(e) => update({ folderInput: e.target.value })}
+                  placeholder="https://drive.google.com/drive/folders/…"
+                  className={inputClassName}
                 />
+                <p className="mt-1 text-sm text-gray-400">
+                  The folder must be shared (as Editor) with the app&apos;s Google service account.
+                </p>
               </div>
-              {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+
+              {error && <p className="mt-2 text-sm text-red-400" role="alert">{error}</p>}
+              {saved && <p className="mt-2 text-sm text-green-400" role="status">Settings saved.</p>}
               <div>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-60"
                 >
                   {saving ? 'Saving...' : 'Save Settings'}
                 </button>
@@ -246,14 +223,11 @@ const Settings = ({ initialSettings }: SettingsProps) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  try {
-    const initialSettings = await getSettings();
-    return { props: { initialSettings } };
-  } catch (error) {
-    console.error('Error fetching initial settings:', error);
-    return { props: { initialSettings: {} } };
+export const getServerSideProps: GetServerSideProps<SettingsProps> = async (context) => {
+  if (!(await isAdmin(context))) {
+    return LOGIN_REDIRECT;
   }
+  return { props: { initialSettings: await getSettings() } };
 };
 
 export default Settings;

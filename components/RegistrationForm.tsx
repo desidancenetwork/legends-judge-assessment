@@ -2,48 +2,50 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import { useAssessment } from '../contexts/AssessmentContext';
-import { FormData } from '../types/types';
+import { RegistrationFormValues } from '../types/types';
+
+const EMAIL_PATTERN = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 
 const RegistrationForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<FormData>();
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm<RegistrationFormValues>();
   const router = useRouter();
   const { setUserInfo } = useAssessment();
 
   const validateEmail = async (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
-    if (!emailRegex.test(email)) {
+    if (!EMAIL_PATTERN.test(email.trim())) {
       return "Invalid email format";
     }
 
-    // Check if the domain has a valid MX record
-    const domain = email.split('@')[1];
+    // Check that the domain can actually receive mail.
+    const domain = email.trim().split('@')[1];
     try {
-      const response = await fetch(`/api/validate-email-domain?domain=${domain}`);
+      const response = await fetch(`/api/validate-email-domain?domain=${encodeURIComponent(domain)}`);
       const { isValid } = await response.json();
       if (!isValid) {
         return "Invalid email domain";
       }
     } catch (error) {
       console.error("Error validating email domain:", error);
-      return "Error validating email";
+      return "Couldn't verify your email. Please check your connection and try again.";
     }
 
     return true;
   };
 
-  const onSubmit = async (data: FormData) => {
-    setUserInfo({ name: data.name, email: data.email });
+  const onSubmit = (data: RegistrationFormValues) => {
+    setUserInfo({ name: data.name.trim(), email: data.email.trim() });
     router.push('/instructions');
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-8 rounded-lg shadow-lg max-w-md mx-auto backdrop-blur-sm bg-white/10">
+    <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-8 rounded-lg shadow-lg max-w-md mx-auto backdrop-blur-sm bg-white/10">
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-white">Name</label>
         <input
           id="name"
           type="text"
-          {...register("name", { required: "Name is required" })}
+          autoComplete="name"
+          {...register("name", { validate: (value) => value.trim().length > 0 || "Name is required" })}
           className="mt-1 block w-full rounded-md border-gray-300 bg-white/20 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-300"
           placeholder="Enter your name"
         />
@@ -55,8 +57,9 @@ const RegistrationForm: React.FC = () => {
         <input
           id="email"
           type="email"
-          {...register("email", { 
-            required: "Email is required", 
+          autoComplete="email"
+          {...register("email", {
+            required: "Email is required",
             validate: validateEmail
           })}
           className="mt-1 block w-full rounded-md border-gray-300 bg-white/20 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-300"
@@ -70,9 +73,10 @@ const RegistrationForm: React.FC = () => {
         <input
           id="confirmEmail"
           type="email"
-          {...register("confirmEmail", { 
+          autoComplete="email"
+          {...register("confirmEmail", {
             required: "Please confirm your email",
-            validate: (value) => value === watch('email') ?? "Emails do not match"
+            validate: (value) => value.trim() === getValues('email').trim() || "Emails do not match"
           })}
           className="mt-1 block w-full rounded-md border-gray-300 bg-white/20 text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 placeholder-gray-300"
           placeholder="Confirm your email"
@@ -82,9 +86,10 @@ const RegistrationForm: React.FC = () => {
 
       <button
         type="submit"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+        disabled={isSubmitting}
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-60"
       >
-        Continue
+        {isSubmitting ? 'Checking…' : 'Continue'}
       </button>
     </form>
   );
