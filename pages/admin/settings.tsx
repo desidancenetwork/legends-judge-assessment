@@ -57,6 +57,7 @@ const Settings = ({ initialSettings }: SettingsProps) => {
   const update = (changes: Partial<FormState>) => {
     setForm((prev) => ({ ...prev, ...changes }));
     setSaved(false);
+    setError('');
   };
 
   const updateVideo = (index: number, value: string) =>

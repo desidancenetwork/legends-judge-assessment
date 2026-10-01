@@ -47,7 +47,7 @@ const Instructions = ({ videoCount, additionalTime, rankingTime }: InstructionsP
             Your notes will auto-submit once the timer runs out.<br /><br />
             Your notes do not have to be written in complete sentences/paragraphs! This is just for you to get a feel for judging in real-time,
             and for us to better prepare our training curriculum for the season.<br /><br />
-            You will be REQUIRED to rank {videoCount === 1 ? 'the video' : `all ${count.toLowerCase()} videos`}, and provide an explanation for your rankings.
+            You will be REQUIRED to rank {videoCount === 1 ? 'the video' : videoCount === 2 ? 'both videos' : `all ${count.toLowerCase()} videos`}, and provide an explanation for your rankings.
             You will have {formatDuration(rankingTime)} to complete your explanation. Your response will auto-submit once the timer runs out.
             We would like your explanation to be written in complete sentences/paragraphs.<br /><br />
             Please make sure you have stable internet connection before beginning, and keep this tab open until you finish.<br /><br />

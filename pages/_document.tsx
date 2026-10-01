@@ -9,14 +9,14 @@ class MyDocument extends Document {
             rel="preload"
             href="/fonts/PontiacInlineShadow.otf"
             as="font"
-            type="font/opentype"
+            type="font/otf"
             crossOrigin="anonymous"
           />
           <link
             rel="preload"
             href="/fonts/Graphik-Regular.otf"
             as="font"
-            type="font/opentype"
+            type="font/otf"
             crossOrigin="anonymous"
           />
         </Head>
