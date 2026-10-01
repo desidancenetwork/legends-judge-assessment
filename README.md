@@ -1,73 +1,97 @@
-# ddn-legends-judge-assessment
-Desi Dance Network - Legends Judge Assessment
-# DDN Legends Dance Championship Judging Platform
+# DDN Legends Judging Assessment
 
-## Overview
+The web app Desi Dance Network uses to run the Legends Dance Championship mock-judging assessment for prospective judges. Candidates register, watch a set of back-row performances, take timed notes, rank the teams with written justifications, and can upload handwritten notes. Every submission is saved to Google Drive as a PDF report.
 
-The DDN Legends Dance Championship Judging Platform is a web-based application designed to evaluate potential judging candidates for the Legends dance competition. It provides a streamlined interface for judges to assess dance performances, input scores, and generate comprehensive reports. The platform is built with Next.js, React, and TypeScript, offering a robust and scalable solution for dance competition organizers.
+Live site: https://ddn-legends-judge-assessment.vercel.app
 
-## Features
+## How it works
 
-- User authentication for current judges and administrators.
-- Video playback for dance performance assessment.
-- Real-time note-taking during video playback.
-- Timed assessment sessions.
-- Drag and drop performance ranking system.
-- PDF report generation with Google Drive integration.
-- Admin dashboard for managing videos and application settings.
-- Responsive design for various devices.
+### For judges
 
-## Setup and Installation
+1. Register with a name and email, read the instructions, and start.
+2. Each video plays once, start to finish, with no player controls. Judges type notes alongside it. When a video ends, a timer gives extra note-taking time, then the notes save automatically and the next video starts.
+3. Judges drag the teams into their ranking and write a justification for each. The ranking timer auto-submits at zero.
+4. Optionally, judges upload photos or PDFs of handwritten notes. Large photos are resized in the browser.
+5. A folder named `<Name>_<YYYY-MM-DD>` is created in the submissions Drive folder, containing the PDF report and any uploaded notes.
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/desidancenetwork/ddn-legends-judge-assessment.git
-   cd ddn-legends-judge-assessment
-   ```
+Judge progress lives in the browser tab. Reloading or closing the tab mid-assessment loses it, and the site warns before that happens.
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+### For admins
 
-3. Set up environment variables:
-   Create a `.env.local` file in the root directory and add the following variables:
-   ```
-   NEXTAUTH_URL=http://localhost:3000
-   NEXTAUTH_SECRET=your_nextauth_secret_here
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   GOOGLE_APPLICATION_CREDENTIALS=path/to/your/google-credentials.json
-   GOOGLE_DRIVE_FOLDER_ID=your_google_drive_folder_id
-   ```
+Sign in with the **Admin** button in the header (`/admin`).
 
-4. Run the development server:
-   ```
-   npm run dev
-   ```
+- **Settings** sets the number of videos (1–5), the YouTube video for each, the note time after each video, the ranking time, and the Google Drive submissions folder. Changes apply to judges who start afterwards.
+- **Submissions** opens the Drive folder.
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+To set up a new season, upload the performance videos to YouTube as **Unlisted** (Private videos can't be embedded), paste their links into Settings, adjust the timers, save, and share the site link with judges.
+
+## Architecture
+
+- Next.js 15 (Pages Router), React 18, TypeScript, Tailwind CSS, hosted on Vercel.
+- Admin settings are a single JSON record (`siteSettings`) in Upstash Redis, connected through the Vercel Marketplace.
+- Submissions go to Google Drive through a Google Cloud service account.
+- The admin area uses NextAuth with one shared username and password from environment variables.
+
+| Path | Purpose |
+| --- | --- |
+| `pages/` | Judge flow (`index` → `instructions` → `assessment` → `assessment/ranking` → `upload-notes` → `farewell`) and the admin pages |
+| `pages/api/submit-assessment.ts` | Validates a submission, creates the judge's Drive folder, uploads the PDF, and returns a short-lived signed ticket for note uploads |
+| `pages/api/upload-note.ts` | Uploads one handwritten-note file (4 MB max) into that folder |
+| `pages/api/admin/settings.ts` | Saves admin settings (requires an admin session) |
+| `utils/settings.ts` | Settings defaults and validation, shared with the browser |
+| `utils/settingsStore.ts` | Redis access (server only) |
+| `utils/googleDrive.ts` | Drive uploads (server only) |
+| `utils/assessmentPdf.ts` | PDF report |
+
+## Local development
+
+Requires Node.js 22 (`nvm use` reads `.nvmrc`).
+
+```bash
+npm install
+npm run dev
+```
+
+The app runs without any configuration: settings are kept in memory and submissions are written to `.local-submissions/` instead of Google Drive. To use the admin pages locally, copy `.env.example` to `.env.local` and set `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `NEXTAUTH_SECRET`. Only add the Redis or Google credentials if you mean to work against real data.
+
+Before pushing, run `npm run lint`, `npm run typecheck`, and `npm run build`.
+
+## Configuration
+
+Set these in Vercel under Project → Settings → Environment Variables. `.env.example` lists them all.
+
+| Variable | Purpose |
+| --- | --- |
+| `ADMIN_USERNAME`, `ADMIN_PASSWORD` | Admin login. Use a long random password. |
+| `NEXTAUTH_SECRET` | Signs admin sessions and note-upload tickets. Generate with `openssl rand -base64 32`. |
+| `NEXTAUTH_URL` | The site's public URL, e.g. `https://ddn-legends-judge-assessment.vercel.app` |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Upstash Redis. Added automatically when the store is connected to the project. |
+| `GOOGLE_CREDENTIALS_CLIENT_EMAIL`, `GOOGLE_CREDENTIALS_PRIVATE_KEY`, `GOOGLE_CREDENTIALS_PRIVATE_KEY_ID`, `GOOGLE_CREDENTIALS_PROJECT_ID`, `GOOGLE_CREDENTIALS_CLIENT_ID` | Fields from the service account's JSON key file |
+
+Secrets must stay on the server: never give them a `NEXT_PUBLIC_` prefix, and never add an `env` block to `next.config.mjs`. Both inline values into the JavaScript every visitor downloads.
+
+### Google Drive
+
+1. In a Google Cloud project owned by DDN, enable the Google Drive API.
+2. Create a service account, then create a JSON key for it.
+3. Copy the key's fields into the `GOOGLE_CREDENTIALS_*` variables.
+4. Give the service account's email Editor access to the submissions folder. A Shared Drive (with the service account as Content manager) is best: files the service account creates in a regular My Drive folder are owned by the service account, so they disappear if it is ever deleted.
+5. Paste the folder link into Admin → Settings.
 
 ## Deployment
 
-This project is designed to be deployed on Coolify, which provides an optimal environment for Next.ts applications.
+Pushes to `main` deploy to production on Vercel. Other branches get preview deployments, which are protected by Vercel Authentication.
 
+## Maintenance notes
 
-## Future Plans and Ownership Transfer
+- Keep Next.js on a supported major version. Next.js 16 removes `next lint`; migrate with `npx @next/codemod@canary next-lint-to-eslint-cli .` when upgrading.
+- `npm audit` reports a PostCSS advisory for the copy bundled inside Next.js. It only matters when processing untrusted CSS at build time, so it doesn't affect this app.
+- The PDF uses the standard Helvetica font, so characters outside Western European alphabets (for example Devanagari or emoji) won't render in the report.
 
-This project is intended to be transferred to Desi Dance Network (DDN) for long-term maintenance and use.
+## Contact
 
-## Contributing
-
-While this project was created by the original developer and will be primarily maintained by DDN, contributions from the community are welcome. Please refer to the CONTRIBUTORS.md file for guidelines on how to contribute.
+For any questions or support, please contact legendsjudging@desidancenetwork.org.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Desi Dance Network for the opportunity to develop this platform
-- All contributors and testers who have helped shape this project
-
-For any questions or support, please contact [Your Contact Information or DDN's Contact Information].
+MIT. See [LICENSE](LICENSE).
