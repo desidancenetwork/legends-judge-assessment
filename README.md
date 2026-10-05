@@ -18,7 +18,7 @@ Judge progress lives in the browser tab. Reloading or closing the tab mid-assess
 
 ### For admins
 
-Sign in with the **Admin** button in the header (`/admin`).
+Sign in with the **Admin** button in the header (`/admin/login`).
 
 - **Settings** sets the number of videos (1–5), the YouTube video for each, the note time after each video, the ranking time, and the Google Drive submissions folder. Changes apply to judges who start afterwards.
 - **Submissions** opens the Drive folder.
